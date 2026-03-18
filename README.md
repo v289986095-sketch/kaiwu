@@ -1,4 +1,9 @@
-# cl-kaiwu 开物 v0.2
+# cl-kaiwu 开物 v0.2---内嵌deepseek的claude code/codex/cursor的超级职能外挂
+
+一个命令---让你用haiku跑出sonnet的感觉
+把coding平台做成越用越懂你，错误不犯2次的工具。
+最终实现-----模型平权
+更懂中国开发者----持续更新中国知识库（我刚更新了麻将番数计算）
 
 **开发初衷，一个viber的碎碎念：**
 claude code 的opus太贵
