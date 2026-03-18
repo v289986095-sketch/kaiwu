@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "file_edit_no_match",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "no match|未找到匹配|search.*not found|patch.*failed|old_string.*not found"
+      },
+      "action": "force_hint",
+      "message": "文件局部修改失败。建议改用全量覆盖方式：先读取完整文件内容，在内存中修改，再整体写回文件。绝对不要凭记忆构造搜索字符串——必须从文件实际内容中精确复制。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "file_edit_repeated_fail",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "edit.*fail.*2|修改.*失败.*2|second.*attempt.*fail"
+      },
+      "action": "force_hint",
+      "message": "局部修改已连续失败2次。停止重试，直接用全量覆盖方式重写整个文件。先读取文件完整内容，修改后整体写回。这是最可靠的方式。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "python_inline_write_file",
+      "trigger": {
+        "tool": "*",
+        "event": "pre_use,post_use",
+        "pattern": "python.*-c.*open\\(|python.*-c.*write\\("
+      },
+      "action": "block",
+      "message": "禁止用 python -c 内联方式写文件。请直接使用编辑器/IDE 的文件写入功能，不要绕道 shell 执行 Python 单行脚本写文件。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "missing_dependency",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "ModuleNotFoundError|No module named|Cannot find module|not found.*npm|ERR.*peer dep"
+      },
+      "action": "warn",
+      "message": "检测到缺少依赖。请先安装所需依赖（pip install / npm install），确认安装成功后再重试。注意：包名可能与 import 名不同（如 pip install Pillow → import PIL）。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "csv_format_validation",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "\\.csv.*writ|wrote.*\\.csv|保存.*csv"
+      },
+      "action": "warn",
+      "message": "已写入 CSV 文件。请验证：1) 编码为 utf-8-sig（Excel 兼容中文）2) 列数与表头一致 3) 无多余逗号或换行。",
+      "severity": "low",
+      "source": "cl_tested"
+    },
+    {
+      "id": "json_format_validation",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "\\.json.*writ|wrote.*\\.json|保存.*json"
+      },
+      "action": "warn",
+      "message": "已写入 JSON 文件。请验证：1) JSON 格式合法（可用 python -m json.tool 验证）2) ensure_ascii=False 保持中文可读 3) 使用 indent=2 便于阅读。",
+      "severity": "low",
+      "source": "cl_tested"
+    },
+    {
+      "id": "shell_traceback",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "Traceback \\(most recent call last\\)|SyntaxError:|IndentationError:|NameError:"
+      },
+      "action": "warn",
+      "message": "检测到 Python 运行时错误。请仔细阅读完整的 traceback 信息，定位到具体出错的文件和行号，读取该文件的对应位置后再修复。不要盲目重试。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "repeated_same_tool",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "repeated.*3.*times|连续.*3.*次|same.*operation.*3"
+      },
+      "action": "force_hint",
+      "message": "同一操作已连续执行3次。请停下来思考：1) 之前的方案为什么不奏效？2) 是否有完全不同的实现路径？3) 是否需要先理解当前代码/文件的实际状态？换一个方向尝试。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "task_done_no_tool",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "任务完成|task.*complete|done|finished"
+      },
+      "action": "warn",
+      "message": "声称任务完成时，请确认：1) 所有修改都已实际写入文件 2) 如有新创建的代码，已运行验证无报错 3) 不要只描述做了什么，要有实际的文件操作记录。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "parent_dir_missing",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "No such file or directory|FileNotFoundError|ENOENT|目录不存在|文件夹不存在"
+      },
+      "action": "force_hint",
+      "message": "文件或目录不存在。常见原因：1) 父目录未创建 → 先 mkdir -p 创建目录 2) 路径拼写错误 → 检查大小写和分隔符 3) 相对路径问题 → 改用绝对路径。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "permission_denied",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "Permission denied|PermissionError|EACCES|权限不足|Access is denied"
+      },
+      "action": "force_hint",
+      "message": "权限不足。可能原因：1) 需要 sudo/管理员权限 2) 文件被其他进程占用 3) 只读文件系统。请告知用户需要什么权限操作。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "encoding_error",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "UnicodeDecodeError|UnicodeEncodeError|codec can't|charmap|gbk|cp936"
+      },
+      "action": "force_hint",
+      "message": "编码错误。中文 Windows 默认 GBK 编码。修复方案：1) 文件读写加 encoding='utf-8' 2) subprocess 加 encoding='utf-8', errors='replace' 3) 不要使用 emoji/特殊 Unicode 符号作为输出，用 ASCII 替代 [OK] [FAIL]。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "timeout_error",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "TimeoutError|timed out|timeout|ETIMEDOUT|ConnectTimeoutError"
+      },
+      "action": "warn",
+      "message": "网络超时。这是暂时性错误，不是代码问题。建议：1) 跳过当前网络操作，先做其他不依赖网络的步骤 2) 如果在中国，考虑使用镜像源 3) 增加 timeout 参数值。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "port_in_use",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "Address already in use|EADDRINUSE|端口.*占用|port.*in use"
+      },
+      "action": "force_hint",
+      "message": "端口被占用。解决方案：1) 换一个端口号 2) 查找并停止占用进程（lsof -i:PORT / netstat -tlnp）3) 等待几秒让操作系统释放端口。",
+      "severity": "medium",
+      "source": "cl_tested"
+    },
+    {
+      "id": "analysis_paralysis",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "no.*tool.*call|连续.*轮.*不调用|only.*text.*no.*action"
+      },
+      "action": "force_hint",
+      "message": "检测到分析瘫痪：连续描述计划但不执行。请立即执行一个具体操作：读取文件、修改代码、或运行命令。不要再描述你打算做什么——直接做。",
+      "severity": "high",
+      "source": "cl_tested"
+    },
+    {
+      "id": "import_name_mismatch",
+      "trigger": {
+        "tool": "*",
+        "event": "post_use",
+        "condition": "result_contains",
+        "pattern": "No module named.*PIL|No module named.*cv2|No module named.*sklearn|No module named.*yaml"
+      },
+      "action": "force_hint",
+      "message": "包名与 import 名不匹配。常见映射：Pillow→PIL, opencv-python→cv2, scikit-learn→sklearn, PyYAML→yaml, pycryptodome→Crypto。请安装正确的包名。",
+      "severity": "medium",
+      "source": "cl_tested"
+    }
+  ]
+}

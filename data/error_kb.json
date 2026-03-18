@@ -1,0 +1,756 @@
+{
+  "version": 3,
+  "description": "预置错误库 v3 — 125条真实开发场景错误，覆盖中国开发者高频问题",
+  "entries": [
+    {
+      "key": "ModuleNotFoundError: No module named 'PIL'",
+      "error": "ModuleNotFoundError: No module named 'PIL'",
+      "solution": "pip install Pillow（包名是 Pillow，import 名是 PIL）",
+      "context": "Python 图像处理"
+    },
+    {
+      "key": "ModuleNotFoundError: No module named 'cv2'",
+      "error": "ModuleNotFoundError: No module named 'cv2'",
+      "solution": "pip install opencv-python（包名是 opencv-python，import 名是 cv2）",
+      "context": "Python 计算机视觉"
+    },
+    {
+      "key": "ModuleNotFoundError: No module named 'sklearn'",
+      "error": "ModuleNotFoundError: No module named 'sklearn'",
+      "solution": "pip install scikit-learn（包名是 scikit-learn，import 名是 sklearn）",
+      "context": "Python 机器学习"
+    },
+    {
+      "key": "ModuleNotFoundError: No module named 'yaml'",
+      "error": "ModuleNotFoundError: No module named 'yaml'",
+      "solution": "pip install PyYAML（包名是 PyYAML，import 名是 yaml）",
+      "context": "Python YAML"
+    },
+    {
+      "key": "ModuleNotFoundError: No module named 'Crypto'",
+      "error": "ModuleNotFoundError: No module named 'Crypto'",
+      "solution": "pip install pycryptodome（pycrypto 已废弃）",
+      "context": "Python 加密"
+    },
+    {
+      "key": "UnicodeDecodeError: 'gbk' codec can't decode",
+      "error": "UnicodeDecodeError: 'gbk' codec can't decode byte in position",
+      "solution": "open(path, 'r', encoding='utf-8')，中文 Windows 默认 GBK 必须显式指定 UTF-8",
+      "context": "中文 Windows 编码"
+    },
+    {
+      "key": "UnicodeEncodeError: 'gbk' codec can't encode character",
+      "error": "UnicodeEncodeError: 'gbk' codec can't encode character",
+      "solution": "脚本开头加：import sys; sys.stdout.reconfigure(encoding='utf-8', errors='replace')。不用 emoji，改用 [OK][FAIL][DONE]",
+      "context": "中文 Windows 编码"
+    },
+    {
+      "key": "FileNotFoundError: No such file or directory",
+      "error": "FileNotFoundError: [Errno 2] No such file or directory",
+      "solution": "os.makedirs(dir, exist_ok=True) 先建目录。用 Path(__file__).parent 获取脚本目录",
+      "context": "文件操作"
+    },
+    {
+      "key": "PermissionError: [Errno 13] Permission denied",
+      "error": "PermissionError: [Errno 13] Permission denied",
+      "solution": "Linux: chmod 755 或 sudo。Windows: 管理员运行。检查文件是否被 Excel 占用",
+      "context": "文件权限"
+    },
+    {
+      "key": "JSONDecodeError: Expecting value",
+      "error": "json.decoder.JSONDecodeError: Expecting value",
+      "solution": "检查文件是否为空，用 encoding='utf-8-sig' 处理 BOM 头，JSON 不支持注释和尾随逗号",
+      "context": "JSON 解析"
+    },
+    {
+      "key": "ConnectionRefusedError: [Errno 111] Connection refused",
+      "error": "ConnectionRefusedError: [Errno 111] Connection refused",
+      "solution": "确认服务已启动，检查端口和防火墙/安全组规则",
+      "context": "网络连接"
+    },
+    {
+      "key": "EADDRINUSE: Address already in use",
+      "error": "Error: listen EADDRINUSE: address already in use :::3000",
+      "solution": "lsof -i:3000 (Linux) 或 netstat -ano | findstr :3000 (Windows) 找进程 kill，或换端口",
+      "context": "服务启动"
+    },
+    {
+      "key": "CORS: Access-Control-Allow-Origin missing",
+      "error": "Access to fetch at ... has been blocked by CORS policy",
+      "solution": "FastAPI 用 CORSMiddleware，Flask 用 flask-cors，Express 用 cors 中间件。allow_origins=['*'] 仅开发用",
+      "context": "前后端联调"
+    },
+    {
+      "key": "npm ERR! ERESOLVE unable to resolve dependency tree",
+      "error": "npm ERR! ERESOLVE unable to resolve dependency tree",
+      "solution": "npm install --legacy-peer-deps 或删除 node_modules 和 package-lock.json 重装",
+      "context": "npm 依赖"
+    },
+    {
+      "key": "npm ERR! network timeout",
+      "error": "npm ERR! network timeout at: https://registry.npmjs.org",
+      "solution": "npm config set registry https://registry.npmmirror.com（注意不是 npm.taobao.org，已失效）",
+      "context": "npm 中国镜像"
+    },
+    {
+      "key": "pip 安装超时 timed out",
+      "error": "ReadTimeoutError: HTTPSConnectionPool host='pypi.org' Read timed out",
+      "solution": "pip install -i https://pypi.tuna.tsinghua.edu.cn/simple <pkg> 或永久配置清华源",
+      "context": "pip 中国镜像"
+    },
+    {
+      "key": "AttributeError: 'NoneType' object has no attribute",
+      "error": "AttributeError: 'NoneType' object has no attribute",
+      "solution": "函数是否忘记 return，.get()/.find() 返回 None，数据库查询无结果",
+      "context": "Python 空值"
+    },
+    {
+      "key": "TypeError: Object of type datetime is not JSON serializable",
+      "error": "TypeError: Object of type datetime is not JSON serializable",
+      "solution": "json.dumps(data, default=str) 或 .isoformat() 转字符串",
+      "context": "JSON 序列化"
+    },
+    {
+      "key": "SettingWithCopyWarning DataFrame",
+      "error": "SettingWithCopyWarning: A value is trying to be set on a copy of a slice from a DataFrame",
+      "solution": "筛选后加 .copy()：sub = df[df['col'] > 0].copy()",
+      "context": "Pandas"
+    },
+    {
+      "key": "OSError: No space left on device",
+      "error": "OSError: [Errno 28] No space left on device",
+      "solution": "df -h 查磁盘，docker system prune -a、pip cache purge 清理空间",
+      "context": "系统资源"
+    },
+    {
+      "key": "SQLAlchemy declarative_base 废弃",
+      "error": "MovedIn20Warning: The declarative_base() function is now available as sqlalchemy.orm.DeclarativeBase",
+      "solution": "SQLAlchemy 2.x：from sqlalchemy.orm import DeclarativeBase; class Base(DeclarativeBase): pass",
+      "context": "SQLAlchemy 升级"
+    },
+    {
+      "key": "requests.exceptions.SSLError: certificate verify failed",
+      "error": "requests.exceptions.SSLError: certificate verify failed",
+      "solution": "pip install --upgrade certifi，开发临时：verify=False，企业内网加自签名证书",
+      "context": "Python HTTPS"
+    },
+    {
+      "key": "docker container name already in use",
+      "error": "docker: Error response from daemon: Conflict. The container name is already in use",
+      "solution": "docker rm -f <container_name> 删旧容器",
+      "context": "Docker"
+    },
+    {
+      "key": "git push rejected non-fast-forward",
+      "error": "error: failed to push some refs Updates were rejected because the tip of your current branch is behind",
+      "solution": "git pull --rebase origin main 后再 push",
+      "context": "Git"
+    },
+    {
+      "key": "微信支付签名错误 HMAC-SHA256",
+      "error": "微信支付返回 return_code=FAIL sign_type=HMAC-SHA256 签名验证失败",
+      "solution": "APIv3 用 RSA 签名，推荐用 wechatpayv3 官方 SDK，不要手拼签名",
+      "context": "微信支付"
+    },
+    {
+      "key": "微信支付 invalid mch_id",
+      "error": "微信支付 return_msg=invalid mch_id",
+      "solution": "mchid 是10位数字商户号不是 appid。JSAPI 必须传该 appid 下的 openid",
+      "context": "微信支付"
+    },
+    {
+      "key": "支付宝签名验证失败",
+      "error": "支付宝 ALI_35_ISV-INVALID-SIGNATURE 签名验证失败",
+      "solution": "私钥格式用 PKCS8，公钥填支付宝给的公钥，charset 统一 utf-8，用沙箱联调",
+      "context": "支付宝"
+    },
+    {
+      "key": "微信小程序 code invalid",
+      "error": "errcode:40029 invalid code",
+      "solution": "code 只能用一次且5分钟有效。流程：wx.login()→拿code→立即发后端→后端换openid，不能复用",
+      "context": "微信小程序 登录"
+    },
+    {
+      "key": "微信小程序 request 合法域名",
+      "error": "微信小程序 request 请求没有被允许 invalid url domain",
+      "solution": "mp.weixin.qq.com 控制台→开发设置→服务器域名→添加域名。必须备案且 HTTPS，不能用 IP",
+      "context": "微信小程序"
+    },
+    {
+      "key": "高德地图 key 无效",
+      "error": "高德地图 INVALID_USER_KEY key不正确或过期",
+      "solution": "Web JS API 和 Web 服务 API 的 key 不同不能混用，检查服务是否已开通，新 key 生效需几分钟",
+      "context": "高德地图"
+    },
+    {
+      "key": "GPS坐标偏移 高德地图",
+      "error": "GPS 坐标在高德地图上偏移几百米",
+      "solution": "中国地图用 GCJ-02，GPS 是 WGS-84 需转换：pip install coordtransform; coordtransform.wgs84_to_gcj02(lng, lat)",
+      "context": "坐标系 中国地图"
+    },
+    {
+      "key": "百度地图坐标偏移",
+      "error": "GCJ-02 坐标在百度地图上偏移",
+      "solution": "百度用 BD-09：coordtransform.gcj02_to_bd09(lng_gcj, lat_gcj)",
+      "context": "百度地图"
+    },
+    {
+      "key": "MySQL 1366 Incorrect string value",
+      "error": "MySQL Incorrect string value for column",
+      "solution": "建表用 CHARACTER SET utf8mb4，已有表：ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4，连接加 charset=utf8mb4",
+      "context": "MySQL 中文编码"
+    },
+    {
+      "key": "MySQL 2003 Can't connect",
+      "error": "Can't connect to MySQL server on '127.0.0.1' (10061)",
+      "solution": "systemctl start mysql，检查3306端口，防火墙放行，bind-address=0.0.0.0 允许远程",
+      "context": "MySQL 连接"
+    },
+    {
+      "key": "Redis WRONGTYPE Operation",
+      "error": "redis.exceptions.ResponseError: WRONGTYPE Operation against a key holding the wrong kind of value",
+      "solution": "对 key 执行的命令与存储类型不匹配，先 DEL key 或检查代码对同一 key 操作一致",
+      "context": "Redis"
+    },
+    {
+      "key": "FastAPI 422 Unprocessable Entity",
+      "error": "HTTP 422 Unprocessable Entity validation error",
+      "solution": "请求体字段类型或必填项不对，查响应体 detail 数组看具体哪个字段错",
+      "context": "FastAPI"
+    },
+    {
+      "key": "FastAPI lifespan startup",
+      "error": "TypeError: FastAPI.__init__() got an unexpected keyword argument 'on_startup'",
+      "solution": "FastAPI 0.93+ 用 lifespan：@asynccontextmanager async def lifespan(app): yield; app = FastAPI(lifespan=lifespan)",
+      "context": "FastAPI 升级"
+    },
+    {
+      "key": "Vue3 this.$router undefined",
+      "error": "Cannot read properties of undefined reading '$router'",
+      "solution": "Vue3 Composition API 用 useRouter() useStore() useRoute()，不用 this.$router",
+      "context": "Vue3"
+    },
+    {
+      "key": "Vite process is not defined",
+      "error": "ReferenceError: process is not defined",
+      "solution": "vite.config.js 加：define: { 'process.env': {} } 或改用 import.meta.env.XXX",
+      "context": "Vite"
+    },
+    {
+      "key": "React useEffect 无限循环",
+      "error": "React Maximum update depth exceeded",
+      "solution": "依赖数组有引用类型每次 render 都是新引用，用 useMemo/useCallback 稳定引用，或依赖只放基本类型",
+      "context": "React Hooks"
+    },
+    {
+      "key": "axios 401 token 过期",
+      "error": "axios request failed with status 401 Unauthorized",
+      "solution": "在响应拦截器处理：401 时清 token 跳登录页，或请求拦截器自动 refresh token",
+      "context": "axios"
+    },
+    {
+      "key": "Spring Boot NoSuchBeanDefinitionException",
+      "error": "org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type",
+      "solution": "类缺 @Service/@Component 注解，或不在 @SpringBootApplication 包下，或 @Autowired 字段是 final",
+      "context": "Spring Boot"
+    },
+    {
+      "key": "Spring Boot 端口 8080 被占用",
+      "error": "Web server failed to start. Port 8080 was already in use",
+      "solution": "application.yml 加 server: port: 8090 换端口",
+      "context": "Spring Boot"
+    },
+    {
+      "key": "Maven 下载依赖超时",
+      "error": "Could not resolve dependencies... connection timed out",
+      "solution": "~/.m2/settings.xml mirrors 节添加阿里云：https://maven.aliyun.com/repository/public",
+      "context": "Maven 中国镜像"
+    },
+    {
+      "key": "Gradle 下载超时",
+      "error": "Could not GET 'https://jcenter.bintray.com' connection timed out",
+      "solution": "build.gradle repositories 改为：maven { url 'https://maven.aliyun.com/repository/public' }",
+      "context": "Gradle 中国镜像"
+    },
+    {
+      "key": "Docker pull 超时",
+      "error": "docker pull timeout context deadline exceeded",
+      "solution": "/etc/docker/daemon.json 加：{\"registry-mirrors\":[\"https://docker.mirrors.ustc.edu.cn\",\"https://hub-mirror.c.163.com\"]}，systemctl restart docker",
+      "context": "Docker 中国镜像"
+    },
+    {
+      "key": "Nginx 413 Request Entity Too Large",
+      "error": "413 Request Entity Too Large nginx",
+      "solution": "nginx.conf 加 client_max_body_size 50m; 后 nginx -s reload",
+      "context": "Nginx 文件上传"
+    },
+    {
+      "key": "Nginx 502 Bad Gateway",
+      "error": "502 Bad Gateway nginx",
+      "solution": "后端未启动或 proxy_pass 地址端口不对，检查后端是否监听 0.0.0.0 而非 127.0.0.1",
+      "context": "Nginx"
+    },
+    {
+      "key": "Nginx 504 Gateway Timeout",
+      "error": "504 Gateway Time-out nginx",
+      "solution": "nginx.conf 加 proxy_read_timeout 300; proxy_connect_timeout 300;，长任务改用异步",
+      "context": "Nginx 超时"
+    },
+    {
+      "key": "Linux crontab 不执行",
+      "error": "crontab 定时任务不运行",
+      "solution": "crontab -l 确认已保存，service cron status 确认运行，脚本用绝对路径，chmod +x 加执行权限",
+      "context": "Linux crontab"
+    },
+    {
+      "key": "Python venv 找不到包",
+      "error": "ModuleNotFoundError 虚拟环境中找不到已安装的包",
+      "solution": "source venv/bin/activate (Linux) 或 venv\\Scripts\\activate (Windows) 激活虚拟环境",
+      "context": "Python 虚拟环境"
+    },
+    {
+      "key": "Windows 路径反斜杠 SyntaxError",
+      "error": "SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes in string",
+      "solution": "用原始字符串 r'C:\\Users\\name' 或正斜杠 'C:/Users/name' 或 Path 对象",
+      "context": "Windows 路径"
+    },
+    {
+      "key": "Windows python not recognized",
+      "error": "'python' is not recognized as an internal or external command",
+      "solution": "安装时勾选 Add Python to PATH，或手动把 Python 目录和 Scripts 加入系统 PATH",
+      "context": "Windows Python 安装"
+    },
+    {
+      "key": "pip install 需要 Visual C++",
+      "error": "error: Microsoft Visual C++ 14.0 or greater is required",
+      "solution": "安装 Visual Studio Build Tools 选 C++ build tools，或用 --only-binary :all: 装预编译版",
+      "context": "Windows pip 编译"
+    },
+    {
+      "key": "Celery worker 无法接收任务",
+      "error": "Celery worker not receiving tasks",
+      "solution": "Redis/RabbitMQ 连接正常，task 有 @app.task 装饰器，include 包含任务模块",
+      "context": "Celery"
+    },
+    {
+      "key": "Django ALLOWED_HOSTS 错误",
+      "error": "DisallowedHost at / Invalid HTTP_HOST header",
+      "solution": "settings.py ALLOWED_HOSTS 加域名或 IP：['yourdomain.com', '1.2.3.4']",
+      "context": "Django 部署"
+    },
+    {
+      "key": "Django migrate 表已存在",
+      "error": "django.db.utils.OperationalError: table already exists",
+      "solution": "python manage.py migrate --fake-initial",
+      "context": "Django migrate"
+    },
+    {
+      "key": "Pydantic v2 validator 废弃",
+      "error": "PydanticUserError: @validator decorator is deprecated",
+      "solution": "Pydantic v2 用 @field_validator，root_validator 改 @model_validator",
+      "context": "Pydantic v2"
+    },
+    {
+      "key": "JWT decode 失败",
+      "error": "jwt.exceptions.DecodeError: Not enough segments",
+      "solution": "SECRET_KEY 前后端一致，token 不丢 Bearer 前缀，exp 用 UTC 时间戳，算法前后端统一",
+      "context": "JWT 认证"
+    },
+    {
+      "key": "WebSocket 连接断开 1006",
+      "error": "WebSocket connection closed with code 1006",
+      "solution": "Nginx 配 proxy_http_version 1.1; Upgrade $http_upgrade; Connection 'upgrade'，检查 ws/wss 协议",
+      "context": "WebSocket"
+    },
+    {
+      "key": "Element Plus 样式不生效",
+      "error": "Element Plus 按需引入后样式缺失",
+      "solution": "全量引入：import 'element-plus/dist/index.css' 或配置 unplugin-vue-components",
+      "context": "Element Plus"
+    },
+    {
+      "key": "uni-app 真机调试连不上",
+      "error": "uni-app 手机真机运行连接失败",
+      "solution": "手机开 USB 调试，允许安装未知来源，换数据线，adb devices 确认识别",
+      "context": "uni-app"
+    },
+    {
+      "key": "Python asyncio event loop closed",
+      "error": "RuntimeError: Event loop is closed",
+      "solution": "用 asyncio.run(main()) 替代 loop.run_until_complete()",
+      "context": "Python asyncio"
+    },
+    {
+      "key": "MySQL too many connections",
+      "error": "MySQL OperationalError: (1040) Too many connections",
+      "solution": "用连接池（SQLAlchemy pool_size），检查连接泄漏（未关闭连接）",
+      "context": "MySQL 连接池"
+    },
+    {
+      "key": "Redis 连接失败",
+      "error": "redis.exceptions.ConnectionError: Error 10061 connecting to localhost:6379",
+      "solution": "redis-cli ping 确认服务，检查 bind 配置和 requirepass 密码",
+      "context": "Redis 连接"
+    },
+    {
+      "key": "腾讯云 COS SignatureDoesNotMatch",
+      "error": "腾讯云 COS SignatureDoesNotMatch",
+      "solution": "SecretId/SecretKey 确认无误，服务器时间需同步（ntpdate），用 cos-python-sdk-v5 官方 SDK",
+      "context": "腾讯云 COS"
+    },
+    {
+      "key": "阿里云 OSS 403 AccessDenied",
+      "error": "阿里云 OSS oss2 AccessDenied",
+      "solution": "endpoint 要和 Bucket region 匹配（杭州用 oss-cn-hangzhou），RAM 子账号需授 OSS 权限",
+      "context": "阿里云 OSS"
+    },
+    {
+      "key": "腾讯云短信模板未审核",
+      "error": "腾讯云短信 FailedOperation.TemplateIncorrectOrUnapproved",
+      "solution": "模板变量用 {1}{2} 格式，国内短信必须有签名，签名和模板提前申请审核",
+      "context": "腾讯云短信"
+    },
+    {
+      "key": "Pandas read_csv 中文乱码",
+      "error": "Pandas read_csv 中文显示乱码",
+      "solution": "pd.read_csv('file.csv', encoding='gbk') 或 encoding='utf-8-sig'（Excel 保存的 CSV）",
+      "context": "Pandas CSV 中文"
+    },
+    {
+      "key": "openpyxl 读取公式不刷新",
+      "error": "openpyxl 读到的单元格值是公式字符串而不是计算结果",
+      "solution": "load_workbook('file.xlsx', data_only=True)，文件需被 Excel 打开保存过",
+      "context": "openpyxl Excel"
+    },
+    {
+      "key": "PyInstaller 找不到模块",
+      "error": "PyInstaller ModuleNotFoundError hidden import",
+      "solution": "pyinstaller --hidden-import=<module> main.py，动态导入需手动声明",
+      "context": "PyInstaller 打包"
+    },
+    {
+      "key": "Node.js 内存溢出",
+      "error": "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory",
+      "solution": "node --max-old-space-size=4096 app.js，检查内存泄漏（未清理的 setInterval、全局缓存）",
+      "context": "Node.js 内存"
+    },
+    {
+      "key": "Webpack 打包体积过大",
+      "error": "webpack bundle size too large",
+      "solution": "路由懒加载，第三方库用 CDN externals，webpack-bundle-analyzer 分析",
+      "context": "Webpack 性能"
+    },
+    {
+      "key": "Flutter pub get 超时",
+      "error": "Flutter pub get timeout",
+      "solution": "export PUB_HOSTED_URL=https://pub.flutter-io.cn; export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn",
+      "context": "Flutter 中国镜像"
+    },
+    {
+      "key": "MongoDB 连接字符串特殊字符",
+      "error": "pymongo.errors.InvalidURI password contains an unescaped '@'",
+      "solution": "密码中特殊字符 URL 编码：@ → %40，或用 urllib.parse.quote_plus(password)",
+      "context": "MongoDB 连接"
+    },
+    {
+      "key": "Python import 循环依赖",
+      "error": "ImportError: cannot import name 'X' from partially initialized module",
+      "solution": "提取共用代码到第三个模块，或函数内部 import 延迟导入",
+      "context": "Python 循环导入"
+    },
+    {
+      "key": "SSH 连接超时",
+      "error": "ssh: connect to host xxx port 22: Connection timed out",
+      "solution": "安全组/防火墙开放22端口，sshd 服务是否启动，ufw allow ssh",
+      "context": "SSH 连接"
+    },
+    {
+      "key": "HTTPS 证书过期",
+      "error": "SSL certificate expired net::ERR_CERT_DATE_INVALID",
+      "solution": "certbot renew 续期，crontab 加定时任务：0 0 1 * * certbot renew --quiet",
+      "context": "SSL 证书"
+    },
+    {
+      "key": "微信公众号 invalid signature",
+      "error": "微信公众号服务器验证 invalid signature",
+      "solution": "token 大小写完全一致，timestamp+nonce+token 字典序排序后 SHA1（不是 MD5）",
+      "context": "微信公众号"
+    },
+    {
+      "key": "飞书 webhook 签名验证失败",
+      "error": "飞书机器人 webhook 签名校验不通过",
+      "solution": "HMAC-SHA256(timestamp + '\\n' + secret)，timestamp 是秒级 Unix 时间戳，base64 编码",
+      "context": "飞书 机器人"
+    },
+    {
+      "key": "钉钉机器人 400 keywords",
+      "error": "钉钉自定义机器人 400 keywords not in content",
+      "solution": "消息内容必须包含配置的关键词，或改用「加签」安全模式",
+      "context": "钉钉 机器人"
+    },
+    {
+      "key": "企业微信 errcode 40014 token 失效",
+      "error": "企业微信 errcode:40014 invalid access_token",
+      "solution": "access_token 有效期2小时需缓存，不要每次重新获取（有频率限制）",
+      "context": "企业微信"
+    },
+    {
+      "key": "BeautifulSoup find() 返回 None",
+      "error": "BeautifulSoup find() 返回 None AttributeError",
+      "solution": "动态加载的页面 requests 拿到空骨架，用 playwright/selenium 渲染后再解析",
+      "context": "BeautifulSoup 爬虫"
+    },
+    {
+      "key": "Scrapy 403 被反爬",
+      "error": "Scrapy 403 Forbidden",
+      "solution": "settings.py 加 USER_AGENT，DOWNLOAD_DELAY=2 降频，ROTATING_PROXY_LIST 换代理",
+      "context": "Scrapy 爬虫"
+    },
+    {
+      "key": "float 计算精度问题",
+      "error": "float 计算结果不准确 0.1 + 0.2 != 0.3",
+      "solution": "from decimal import Decimal; Decimal('0.1') + Decimal('0.2')，数据库金额用 DECIMAL(10,2)",
+      "context": "Python 精度 金融"
+    },
+    {
+      "key": "时区差8小时",
+      "error": "数据库时间和显示时间差8小时",
+      "solution": "统一用 UTC 存储，显示时转换：utc_time.astimezone(ZoneInfo('Asia/Shanghai'))。MySQL time_zone='+8:00'",
+      "context": "时区 中国时间"
+    },
+    {
+      "key": "Linux 中文显示乱码",
+      "error": "Linux 终端中文显示为方块或问号",
+      "solution": "export LANG=zh_CN.UTF-8; export LC_ALL=zh_CN.UTF-8，SSH 客户端编码设为 UTF-8",
+      "context": "Linux 中文"
+    },
+    {
+      "key": "Gunicorn worker timeout",
+      "error": "WORKER TIMEOUT gunicorn",
+      "solution": "gunicorn --timeout 120，长任务改 Celery 异步",
+      "context": "Gunicorn 部署"
+    },
+    {
+      "key": "Go mod 下载失败",
+      "error": "go get timeout connection refused",
+      "solution": "go env -w GOPROXY=https://goproxy.cn,direct; go env -w GONOSUMCHECK=*",
+      "context": "Go 中国镜像"
+    },
+    {
+      "key": "Rust cargo 下载慢",
+      "error": "cargo build timeout downloading crates",
+      "solution": "~/.cargo/config.toml 加 ustc 镜像：sparse+https://mirrors.ustc.edu.cn/crates.io-index/",
+      "context": "Rust 中国镜像"
+    },
+    {
+      "key": "conda 安装慢超时",
+      "error": "conda install timeout CondaHTTPError",
+      "solution": "conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/",
+      "context": "conda 中国镜像"
+    },
+    {
+      "key": "微信网页授权 scope",
+      "error": "微信网页授权 scope snsapi_userinfo 需要用户授权",
+      "solution": "snsapi_base 静默只获 openid，snsapi_userinfo 需用户同意。redirect_uri 需在公众平台配置网页授权域名",
+      "context": "微信公众号 OAuth"
+    },
+    {
+      "key": "Python 3.12 移除 distutils",
+      "error": "ModuleNotFoundError: No module named 'distutils'",
+      "solution": "pip install setuptools 补回，或升级依赖包到支持 3.12 的版本",
+      "context": "Python 3.12"
+    },
+    {
+      "key": "OpenAI API rate limit",
+      "error": "openai.error.RateLimitError: Rate limit reached",
+      "solution": "指数退避重试：time.sleep(2**n)，或用 tenacity 库自动重试",
+      "context": "OpenAI API"
+    },
+    {
+      "key": "DeepSeek API 余额不足",
+      "error": "DeepSeek API insufficient balance 402",
+      "solution": "platform.deepseek.com 充值，检查 API Key 是否对应正确账户",
+      "context": "DeepSeek API"
+    },
+    {
+      "key": "MCP 工具未被调用",
+      "error": "Claude Code MCP 工具配置了但不调用",
+      "solution": "CLAUDE.md 写明调用时机，工具 docstring 说明使用场景，claude mcp list 确认加载，重启 Claude Code",
+      "context": "MCP Claude Code"
+    },
+    {
+      "key": "Windows 长路径限制 260",
+      "error": "FileNotFoundError 路径超过260字符 WinError 206",
+      "solution": "注册表 HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem LongPathsEnabled=1 或 gpedit.msc 启用",
+      "context": "Windows 路径限制"
+    },
+    {
+      "key": "Axios CSRF Token 缺失",
+      "error": "Django CSRF verification failed 403",
+      "solution": "axios.defaults.headers.common['X-CSRFToken'] = getCookie('csrftoken')，withCredentials: true",
+      "context": "CSRF"
+    },
+    {
+      "key": "marshmallow missing 参数",
+      "error": "TypeError: __init__() got an unexpected keyword argument 'missing'",
+      "solution": "marshmallow 3.x 改名：missing → load_default",
+      "context": "marshmallow"
+    },
+    {
+      "key": "subprocess bytes str 类型不匹配",
+      "error": "TypeError: a bytes-like object is required, not 'str'",
+      "solution": "subprocess.run() text=True 时传 str，text=False 传 bytes，不要混用",
+      "context": "Python subprocess"
+    },
+    {
+      "key": "RecursionError: maximum recursion depth exceeded",
+      "error": "RecursionError: maximum recursion depth exceeded",
+      "solution": "检查递归终止条件，或改用迭代（while 循环）",
+      "context": "Python 递归"
+    },
+    {
+      "key": "git push rejected non-fast-forward",
+      "error": "error: failed to push some refs Updates were rejected",
+      "solution": "git pull --rebase origin main 后再 push",
+      "context": "Git"
+    },
+    {
+      "key": "SyntaxError f-string backslash",
+      "error": "SyntaxError: f-string expression part cannot include a backslash",
+      "solution": "Python 3.11以下 f-string 不能有反斜杠，先赋值给变量再放入 f-string。3.12+ 已解除",
+      "context": "Python 语法"
+    },
+    {
+      "key": "微信 errcode 40013 invalid appid",
+      "error": "微信接口返回 errcode:40013 invalid appid",
+      "solution": "appid 填错了。小程序 appid 和公众号 appid 不能混用。检查传的 appid 和 code 是否来自同一个应用",
+      "context": "微信 公众号 小程序"
+    },
+    {
+      "key": "微信 errcode -1 system error",
+      "error": "微信接口返回 errcode:-1 system error rid",
+      "solution": "微信系统临时错误，稍等重试。如持续出现请到微信开放社区发帖，附上 rid",
+      "context": "微信 公众号"
+    },
+    {
+      "key": "微信 errcode 45009 reach max api daily quota limit",
+      "error": "微信接口返回 errcode:45009 reach max api daily quota limit",
+      "solution": "当天接口调用次数用完。调用 clear_quota 接口清空（每天最多调用一次），或等明天自动重置",
+      "context": "微信 公众号 限额"
+    },
+    {
+      "key": "微信 errcode 40029 invalid code",
+      "error": "微信 jscode2session 返回 errcode:40029 invalid code",
+      "solution": "code 被使用两次或已过期（有效期5分钟）。每次登录必须重新调用 wx.login() 获取新 code，不能缓存复用",
+      "context": "微信小程序 登录"
+    },
+    {
+      "key": "微信 errcode 61004 ip not registered",
+      "error": "微信接口返回 errcode:61004 access clientip is not registered",
+      "solution": "服务器 IP 未加入白名单。在公众号/小程序后台→开发设置→IP白名单添加服务器公网IP。多个IP用英文分号隔开",
+      "context": "微信 IP白名单"
+    },
+    {
+      "key": "微信小程序云开发 invalid scope",
+      "error": "cloud init error: invalid scope",
+      "solution": "AppID 未开通云开发服务，或刚开通未过准备期（约10分钟）。先在微信开发者工具开通云开发，等10分钟后重试",
+      "context": "微信小程序 云开发"
+    },
+    {
+      "key": "微信小程序 request errno 600001",
+      "error": "wx.request fail errno: 600001 net::ERR_ADDRESS_UNREACHABLE",
+      "solution": "域名证书链有问题或 token 太长导致 header 超限。检查 SSL 证书是否完整（需要中间证书），JWT token 不要放 header 里传，改放 body",
+      "context": "微信小程序 网络请求"
+    },
+    {
+      "key": "Docker Spring Boot 连不上 MySQL localhost",
+      "error": "Spring Boot 在 Docker 中无法连接 MySQL，使用 localhost 或 127.0.0.1 连接失败",
+      "solution": "Docker 容器内的 localhost 是容器自身，不是宿主机。用 docker-compose 时改用服务名（如 db），单独容器时用 host.docker.internal（Windows/Mac）或宿主机实际 IP",
+      "context": "Docker Spring Boot MySQL"
+    },
+    {
+      "key": "Spring Boot Redis 密码含特殊字符",
+      "error": "Spring Boot 连接 Redis 密码包含特殊字符 # @ ! 导致连接失败",
+      "solution": "application.yml 中密码含特殊字符必须用引号包裹：password: \"root#123\"。不加引号 # 会被当作注释",
+      "context": "Spring Boot Redis 密码"
+    },
+    {
+      "key": "Spring Boot 3.3 Logback 回滚策略不兼容",
+      "error": "Spring Boot 3.3.4 升级后 Logback 配置报错 FixedWindowRollingPolicy",
+      "solution": "Logback 1.5.x 更新了回滚策略类名。移除日志文件名中的 %i 令牌，改用 TimeBasedRollingPolicy 替代 FixedWindowRollingPolicy",
+      "context": "Spring Boot 升级 Logback"
+    },
+    {
+      "key": "Vue3 v-for 同时用 v-if 报错",
+      "error": "Vue3 v-for 和 v-if 同一元素上，v-if 访问不到 v-for 的变量",
+      "solution": "Vue3 中 v-if 优先级高于 v-for，v-if 访问不到循环变量。解法：用 <template v-for> 包裹，v-if 放内层元素。或用 computed 过滤数据再 v-for",
+      "context": "Vue3 指令"
+    },
+    {
+      "key": "Vue3 setInterval 内存泄漏",
+      "error": "Vue3 组件销毁后 setInterval 仍在运行，内存泄漏",
+      "solution": "在 onUnmounted 中清理定时器：const timer = setInterval(fn, 1000); onUnmounted(() => clearInterval(timer))",
+      "context": "Vue3 生命周期"
+    },
+    {
+      "key": "Vue3 localStorage computed 不响应",
+      "error": "Vue3 computed 依赖 localStorage 读取，数据变化时 computed 不更新",
+      "solution": "localStorage 不是响应式的，computed 不会追踪它的变化。改用 ref 或 reactive 存储数据，或用 useLocalStorage（vueuse 库）",
+      "context": "Vue3 响应式"
+    },
+    {
+      "key": "Vue3 可变默认参数 mutable default argument",
+      "error": "Python/Vue 函数默认参数是对象或数组，多次调用共享同一引用",
+      "solution": "函数默认参数不能用 [] 或 {}，改用 None 再在函数内初始化：def fn(items=None): if items is None: items = []",
+      "context": "Python Vue 默认参数"
+    },
+    {
+      "key": "Redis stop-writes-on-bgsave-error",
+      "error": "Redis MISCONF Redis is configured to save RDB snapshots, but is currently not able to persist on disk",
+      "solution": "磁盘满或权限问题导致 RDB 快照失败，Redis 拒绝写操作。解法：1) 清理磁盘空间 2) 或临时关闭：config set stop-writes-on-bgsave-error no",
+      "context": "Redis RDB 磁盘"
+    },
+    {
+      "key": "Redis sentinel 连接报错",
+      "error": "Spring Boot Redis Sentinel 连接失败 RedisConnectionFailureException",
+      "solution": "Sentinel 模式需配置 spring.redis.sentinel.master 和 nodes，不能用普通的 host/port 配置。确认 sentinel 端口（默认26379）而非 redis 端口（6379）",
+      "context": "Redis Sentinel Spring Boot"
+    },
+    {
+      "key": "Python 可变默认参数陷阱",
+      "error": "Python 函数默认参数是列表，第二次调用时列表被污染",
+      "solution": "def fn(items=None): if items is None: items = [] 永远不要用可变对象作默认参数值，每次调用会共享同一个对象",
+      "context": "Python 函数 陷阱"
+    },
+    {
+      "key": "Python global 变量修改",
+      "error": "Python 函数内修改全局变量，函数外变量没有变化",
+      "solution": "函数内赋值会创建新的局部变量，不影响全局。用 global x 声明：def modify(): global x; x = 20",
+      "context": "Python 作用域 变量"
+    },
+    {
+      "key": "Python 迭代时修改列表",
+      "error": "Python 在 for 循环中 remove/append 列表，结果不对或跳过元素",
+      "solution": "不要在迭代时修改列表。用列表推导式：new_list = [x for x in lst if condition(x)]，或先 .copy() 再迭代原列表",
+      "context": "Python 列表 迭代"
+    },
+    {
+      "key": "Python is None vs == None",
+      "error": "Python 用 == None 比较，可能因自定义 __eq__ 产生意外结果",
+      "solution": "判断 None 必须用 is：if x is None 或 if x is not None。== None 可能被自定义类重写返回错误结果",
+      "context": "Python None 判断"
+    },
+    {
+      "key": "微信支付 errcode 50002 user limited",
+      "error": "微信接口返回 errcode:50002 user limited",
+      "solution": "账号被冻结、注销或迁移。用手机扫公众号/小程序码验证是否正常。账号冻结需联系微信客服处理",
+      "context": "微信支付 账号"
+    },
+    {
+      "key": "微信小程序提审 errcode 85085",
+      "error": "小程序提审返回 errcode:85085 submit audit reach limit",
+      "solution": "本月提审次数达上限。可在小程序服务商助手→审核专区查询额度，或申请临时提升额度",
+      "context": "微信小程序 提审"
+    }
+  ]
+}

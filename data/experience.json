@@ -1,0 +1,1108 @@
+{
+  "version": 3,
+  "description": "预置经验库 v3 — 43条中国开发者常用场景最佳实践",
+  "entries": [
+    {
+      "exp_id": "fastapi_crud_sqlite",
+      "task_type": "backend_api",
+      "task_description": "用 FastAPI 创建 RESTful API，含 SQLite CRUD 操作",
+      "summary": "FastAPI + SQLAlchemy + Alembic 组合，async engine 提升并发处理能力",
+      "fix_strategy": "用 create_async_engine + AsyncSession，Pydantic v2 做请求验证，alembic 管理迁移",
+      "key_steps": [
+        "pip install fastapi uvicorn sqlalchemy[asyncio] aiosqlite alembic",
+        "create_async_engine('sqlite+aiosqlite:///./db.sqlite3')",
+        "定义 Base = DeclarativeBase()，模型继承 Base",
+        "APIRouter 分模块，main.py 注册路由",
+        "alembic init + alembic revision --autogenerate"
+      ],
+      "problem_keywords": [
+        "fastapi",
+        "crud",
+        "sqlite",
+        "api",
+        "restful"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "wechat_pay_v3",
+      "task_type": "wechat_pay",
+      "task_description": "后端接入微信支付 V3，含 JSAPI 和 Native 支付",
+      "summary": "微信支付 V3 必须用 RSA 签名，推荐 wechatpayv3 库，JSAPI 支付需要用户 openid",
+      "fix_strategy": "pip install wechatpayv3，证书文件放安全目录，JSAPI 支付传 openid，异步处理回调通知",
+      "key_steps": [
+        "pip install wechatpayv3，从微信商户平台下载证书",
+        "WeChatPay(wechatpay_type=MINIPROG, mchid, private_key, cert_serial_no, apiv3_key, appid)",
+        "JSAPI 下单必传 openid（用户在该 appid 下的）",
+        "回调用 wechatpay.decrypt_callback() 解密，验签",
+        "回调返回 {code:'SUCCESS',message:'成功'} 否则微信会重试"
+      ],
+      "problem_keywords": [
+        "微信支付",
+        "wechat",
+        "pay",
+        "jsapi",
+        "native",
+        "支付"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "wechat_miniapp_login",
+      "task_type": "wechat_miniapp",
+      "task_description": "微信小程序登录，获取 openid 和 session_key",
+      "summary": "wx.login() 获取 code，后端调微信接口换 openid，不要把 session_key 返给前端",
+      "fix_strategy": "前端 wx.login()→code→发后端，后端 GET https://api.weixin.qq.com/sns/jscode2session，生成自己的 token 返回",
+      "key_steps": [
+        "前端：wx.login({ success(res){ 发 res.code 给后端 } })",
+        "后端：GET https://api.weixin.qq.com/sns/jscode2session?appid=&secret=&js_code=&grant_type=authorization_code",
+        "得到 openid 和 session_key，session_key 存 Redis 不返给前端",
+        "生成自己的 JWT 或 token 返给小程序",
+        "code 只能用一次，5分钟有效，不要缓存"
+      ],
+      "problem_keywords": [
+        "小程序",
+        "miniapp",
+        "login",
+        "openid",
+        "session_key",
+        "code"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "amap_basic",
+      "task_type": "amap",
+      "task_description": "前端接入高德地图 JS API，显示地图和标记点",
+      "summary": "高德 JS API 2.0 用 AMap.Map 初始化，坐标必须是 GCJ-02，GPS 坐标需转换",
+      "fix_strategy": "在 console.amap.com 申请 Web JS API 的 key（不是 Web 服务），加载 JSAPI Loader",
+      "key_steps": [
+        "npm install @amap/amap-jsapi-loader",
+        "AMapLoader.load({key, version:'2.0', plugins:['AMap.Marker']}).then(AMap=>{ map = new AMap.Map('container') })",
+        "GPS坐标转GCJ-02：pip install coordtransform; coordtransform.wgs84_to_gcj02(lng,lat)",
+        "new AMap.Marker({position:[lng,lat], map})",
+        "Web JS API key 和 Web 服务 key 不同，不能混用"
+      ],
+      "problem_keywords": [
+        "高德",
+        "amap",
+        "地图",
+        "marker",
+        "坐标",
+        "map"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "alipay_web_pay",
+      "task_type": "alipay",
+      "task_description": "PC 网站接入支付宝电脑网站支付",
+      "summary": "支付宝用 RSA2 签名，私钥 PKCS8 格式，公钥填支付宝给的应用公钥",
+      "fix_strategy": "pip install alipay-sdk-python，用沙箱联调，charset=utf-8，return_url 和 notify_url 分开处理",
+      "key_steps": [
+        "pip install alipay-sdk-python，支付宝开放平台生成 RSA2 密钥对",
+        "AliPay(appid, notify_url, app_private_key_string, alipay_public_key_string, sign_type='RSA2')",
+        "alipay.api_alipay_trade_page_pay() 生成支付 URL，前端跳转",
+        "notify 回调验签：alipay.verify(data, signature)",
+        "沙箱环境：AliPay(gateway='https://openapi.alipaydev.com/gateway.do')"
+      ],
+      "problem_keywords": [
+        "支付宝",
+        "alipay",
+        "支付",
+        "pay",
+        "rsa2"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "vue3_element_plus_admin",
+      "task_type": "web",
+      "task_description": "Vue3 + Element Plus 搭建后台管理系统",
+      "summary": "Vue3 + Vite + Element Plus + Pinia + Vue Router 4 组合搭建后台管理系统",
+      "fix_strategy": "用 create-vue 脚手架，Element Plus 按需引入，Pinia 管理全局状态，axios 封装请求拦截",
+      "key_steps": [
+        "npm create vue@latest（选 TypeScript + Vue Router + Pinia）",
+        "npm install element-plus @element-plus/icons-vue",
+        "vite.config.ts 配置 unplugin-vue-components 按需引入",
+        "axios 封装：请求拦截加 token，响应拦截处理 401/500",
+        "npm config set registry https://registry.npmmirror.com 先切镜像"
+      ],
+      "problem_keywords": [
+        "vue3",
+        "element",
+        "plus",
+        "admin",
+        "后台",
+        "管理"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "django_rest_deploy",
+      "task_type": "backend_api",
+      "task_description": "Django REST Framework 项目部署到 Linux 服务器",
+      "summary": "Django + Gunicorn + Nginx 部署方案，systemd 管理进程",
+      "fix_strategy": "gunicorn 绑 127.0.0.1，nginx 反代，静态文件 collectstatic，systemd service 开机启动",
+      "key_steps": [
+        "pip install gunicorn，gunicorn -w 4 -b 127.0.0.1:8000 project.wsgi",
+        "ALLOWED_HOSTS 加域名和 IP，DEBUG=False",
+        "python manage.py collectstatic，nginx 配 static 目录",
+        "systemd /etc/systemd/system/gunicorn.service，systemctl enable gunicorn",
+        "certbot --nginx 一键申请 HTTPS 证书"
+      ],
+      "problem_keywords": [
+        "django",
+        "gunicorn",
+        "nginx",
+        "部署",
+        "deploy",
+        "linux"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "mysql_utf8mb4_setup",
+      "task_type": "database",
+      "task_description": "MySQL 配置中文和 emoji 支持，解决乱码问题",
+      "summary": "MySQL 必须用 utf8mb4 不是 utf8，utf8 是3字节不支持 emoji",
+      "fix_strategy": "my.cnf 设置字符集，建库建表指定 utf8mb4，连接串加 charset=utf8mb4",
+      "key_steps": [
+        "my.cnf: [mysqld] character-set-server=utf8mb4 collation-server=utf8mb4_unicode_ci",
+        "CREATE DATABASE db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+        "Python 连接：mysql+pymysql://user:pass@host/db?charset=utf8mb4",
+        "已有库迁移：ALTER DATABASE db CHARACTER SET utf8mb4",
+        "检查：SHOW VARIABLES LIKE 'character%'"
+      ],
+      "problem_keywords": [
+        "mysql",
+        "utf8mb4",
+        "中文",
+        "乱码",
+        "emoji",
+        "字符集"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "redis_cache_pattern",
+      "task_type": "backend_api",
+      "task_description": "用 Redis 实现接口缓存，提升高频查询性能",
+      "summary": "Redis 缓存设置合理 TTL，用 JSON 序列化存储，注意缓存穿透和雪崩",
+      "fix_strategy": "pip install redis，用装饰器封装缓存逻辑，key 设计为 module:id:field 格式",
+      "key_steps": [
+        "pip install redis, r = redis.Redis(host='localhost', port=6379, decode_responses=True)",
+        "缓存 key 命名：cache:user:123:profile",
+        "设置 TTL：r.setex(key, 300, json.dumps(data))（300秒）",
+        "缓存穿透：查询结果为空也缓存，TTL 设短（60s）",
+        "缓存雪崩：TTL 加随机抖动：300 + random.randint(0,60)"
+      ],
+      "problem_keywords": [
+        "redis",
+        "缓存",
+        "cache",
+        "ttl",
+        "性能"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "jwt_auth_fastapi",
+      "task_type": "backend_api",
+      "task_description": "FastAPI 实现 JWT 登录认证",
+      "summary": "python-jose 生成 JWT，FastAPI Depends 实现路由保护，token 存 Cookie 或 Authorization 头",
+      "fix_strategy": "pip install python-jose[cryptography] passlib[bcrypt]，SECRET_KEY 用环境变量，exp 用 UTC",
+      "key_steps": [
+        "pip install python-jose[cryptography] passlib[bcrypt]",
+        "create_access_token: {'sub': user_id, 'exp': datetime.utcnow()+timedelta(hours=24)}",
+        "verify: jwt.decode(token, SECRET_KEY, algorithms=['HS256'])",
+        "FastAPI Depends: async def get_current_user(token: str = Depends(oauth2_scheme))",
+        "密码：bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())，验证 bcrypt.checkpw()"
+      ],
+      "problem_keywords": [
+        "jwt",
+        "认证",
+        "auth",
+        "login",
+        "token",
+        "fastapi"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "celery_redis_task",
+      "task_type": "backend_api",
+      "task_description": "Celery + Redis 实现异步任务队列，处理耗时操作",
+      "summary": "Celery + Redis broker 实现 Python 异步任务，适合发邮件、处理图片等耗时操作",
+      "fix_strategy": "pip install celery redis，task 用 @shared_task，supervisor 或 systemd 管理 worker 进程",
+      "key_steps": [
+        "pip install celery redis",
+        "celery.py: app = Celery('proj', broker='redis://localhost:6379/0')",
+        "@app.task def send_email(to, subject): ...",
+        "调用：send_email.delay(to, subject) 或 .apply_async(countdown=60)",
+        "启动：celery -A proj worker --loglevel=info -c 4（4个并发）"
+      ],
+      "problem_keywords": [
+        "celery",
+        "异步",
+        "任务",
+        "队列",
+        "redis",
+        "worker"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "docker_compose_web",
+      "task_type": "backend_api",
+      "task_description": "用 Docker Compose 部署 Web 应用（含数据库和 Redis）",
+      "summary": "docker-compose.yml 定义多服务，volumes 持久化数据，networks 隔离通信",
+      "fix_strategy": "服务间用服务名互访（不用 localhost），数据库用 volume 挂载，.env 管理密钥",
+      "key_steps": [
+        "docker-compose.yml: services: web/db/redis，depends_on 设依赖顺序",
+        "数据库连接用服务名：mysql://user:pass@db:3306/dbname（不是 localhost）",
+        "volumes: - ./data:/var/lib/mysql 持久化数据库",
+        "env_file: .env 读取密钥，.env 加入 .gitignore",
+        "docker compose up -d，docker compose logs -f 查日志"
+      ],
+      "problem_keywords": [
+        "docker",
+        "compose",
+        "部署",
+        "container",
+        "容器"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "nginx_https_config",
+      "task_type": "backend_api",
+      "task_description": "Nginx 配置 HTTPS 和反向代理",
+      "summary": "certbot 一键申请 Let's Encrypt 证书，Nginx 配置 HTTP 自动跳 HTTPS",
+      "fix_strategy": "先配 HTTP 能访问，再 certbot --nginx 自动配 HTTPS，设置 crontab 自动续期",
+      "key_steps": [
+        "apt install certbot python3-certbot-nginx",
+        "certbot --nginx -d yourdomain.com 自动配置",
+        "nginx.conf: proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host;",
+        "crontab: 0 0 1 * * certbot renew --quiet 自动续期",
+        "强制 HTTPS：return 301 https://$server_name$request_uri;"
+      ],
+      "problem_keywords": [
+        "nginx",
+        "https",
+        "ssl",
+        "证书",
+        "反向代理"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "python_windows_encoding",
+      "task_type": "python_script",
+      "task_description": "Python 脚本在 Windows 中文环境运行，解决编码问题",
+      "summary": "中文 Windows 的 GBK 编码是万恶之源，所有 IO 操作都要显式指定 UTF-8",
+      "fix_strategy": "脚本开头加 UTF-8 声明，所有文件操作指定 encoding，subprocess 指定 encoding，不用 emoji",
+      "key_steps": [
+        "脚本第一行：# -*- coding: utf-8 -*-",
+        "import sys; sys.stdout.reconfigure(encoding='utf-8', errors='replace')",
+        "所有 open() 加 encoding='utf-8'",
+        "subprocess.run(cmd, encoding='utf-8', errors='replace')",
+        "print 不用 emoji 符号，改用 [OK][FAIL][INFO]"
+      ],
+      "problem_keywords": [
+        "windows",
+        "编码",
+        "utf8",
+        "gbk",
+        "中文",
+        "unicode"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "pandas_data_clean",
+      "task_type": "data_analysis",
+      "task_description": "Pandas 清洗 Excel/CSV 数据，处理中文和缺失值",
+      "summary": "中文 CSV 用 gbk 编码读，Excel 用 openpyxl 引擎，清洗后存 utf-8",
+      "fix_strategy": "先探索数据结构再清洗，缺失值策略提前定，日期统一格式，数值列转 Decimal",
+      "key_steps": [
+        "pd.read_csv('file.csv', encoding='gbk') 或 encoding='utf-8-sig'（Excel 保存的）",
+        "pd.read_excel('file.xlsx', engine='openpyxl')",
+        "df.info() df.describe() 先看数据概况",
+        "df.dropna(subset=['key_col']) 或 df.fillna({'col': 0})",
+        "df.to_csv('output.csv', encoding='utf-8-sig', index=False)（Excel 能直接打开）"
+      ],
+      "problem_keywords": [
+        "pandas",
+        "excel",
+        "csv",
+        "清洗",
+        "数据",
+        "中文"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "uniapp_wechat_miniapp",
+      "task_type": "wechat_miniapp",
+      "task_description": "uni-app 开发微信小程序，含网络请求和本地存储",
+      "summary": "uni-app 封装 uni.request 为 Promise，统一处理 token 和错误，存储用 uni.setStorageSync",
+      "fix_strategy": "封装 request 工具，全局配置 baseURL，storage 统一管理，分包减少主包大小",
+      "key_steps": [
+        "manifest.json 填微信小程序 appid",
+        "封装 request：new Promise((resolve,reject)=>{ uni.request({url:BASE_URL+url, header:{'Authorization':token}}) })",
+        "uni.setStorageSync('token', token)，uni.getStorageSync('token')",
+        "超包处理：pages.json 配置 subPackages 分包",
+        "真机调试：手机开 USB 调试，HBuilderX 运行到手机"
+      ],
+      "problem_keywords": [
+        "uniapp",
+        "uni-app",
+        "小程序",
+        "微信",
+        "request"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "python_script_cli",
+      "task_type": "python_script",
+      "task_description": "创建 Python CLI 命令行工具，支持子命令和参数解析",
+      "summary": "typer 简洁易用，argparse 内置于标准库，click 功能丰富，按需选择",
+      "fix_strategy": "typer 用装饰器定义命令，自动生成 help，配合 rich 输出美化",
+      "key_steps": [
+        "pip install typer rich",
+        "@app.command() def main(name: str, count: int = typer.Option(1, help='循环次数')): ...",
+        "typer.echo() 输出，typer.confirm() 确认，typer.Argument() 位置参数",
+        "子命令：app = typer.Typer(); @app.command('init') @app.command('run')",
+        "if __name__ == '__main__': app()"
+      ],
+      "problem_keywords": [
+        "cli",
+        "命令行",
+        "argparse",
+        "typer",
+        "click",
+        "参数"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "pytest_unit_test",
+      "task_type": "test_case",
+      "task_description": "为 Python 模块写 pytest 单元测试，含 mock 和 fixture",
+      "summary": "pytest + pytest-mock 做 Python 测试，fixture 管理测试数据，mock 隔离外部依赖",
+      "fix_strategy": "测试文件命名 test_xxx.py，函数命名 test_xxx，mock 外部 API 和数据库",
+      "key_steps": [
+        "pip install pytest pytest-mock pytest-asyncio",
+        "@pytest.fixture def db(): yield setup_test_db(); teardown()",
+        "mocker.patch('module.function', return_value=mock_data)",
+        "pytest.raises(ValueError) 测试异常",
+        "pytest -v --cov=module --cov-report=html 覆盖率报告"
+      ],
+      "problem_keywords": [
+        "pytest",
+        "测试",
+        "test",
+        "mock",
+        "fixture",
+        "单元测试"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "tencent_sms",
+      "task_type": "backend_api",
+      "task_description": "接入腾讯云短信发送验证码",
+      "summary": "腾讯云短信模板变量用{1}{2}，国内必须有签名，签名和模板提前审核",
+      "fix_strategy": "用官方 SDK，模板变量数组传参，验证码存 Redis 设5分钟 TTL",
+      "key_steps": [
+        "pip install tencentcloud-sdk-python",
+        "from tencentcloud.sms.v20210111 import sms_client, models",
+        "模板：您的验证码为{1}，{2}分钟内有效",
+        "req.TemplateParamSet = [code, '5']，req.PhoneNumberSet = ['+86手机号']",
+        "验证码存 Redis：r.setex(f'sms:{phone}', 300, code)"
+      ],
+      "problem_keywords": [
+        "短信",
+        "sms",
+        "验证码",
+        "腾讯云",
+        "模板"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "oss_file_upload",
+      "task_type": "backend_api",
+      "task_description": "后端接入阿里云 OSS 实现文件上传",
+      "summary": "oss2 直传 + 前端直传（STS token）两种方案，大文件用分片上传",
+      "fix_strategy": "生产用 STS 临时凭证让前端直传，不用经过后端，节省带宽",
+      "key_steps": [
+        "pip install oss2",
+        "auth = oss2.Auth(access_key_id, access_key_secret)",
+        "bucket = oss2.Bucket(auth, 'https://oss-cn-hangzhou.aliyuncs.com', bucket_name)",
+        "bucket.put_object(key, file_data)，bucket.get_object(key)",
+        "生成前端直传 STS：sts_client.assume_role(role_arn, session_name)"
+      ],
+      "problem_keywords": [
+        "oss",
+        "上传",
+        "阿里云",
+        "文件",
+        "存储",
+        "upload"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "gin_rest_api",
+      "task_type": "backend_api",
+      "task_description": "Go Gin 框架搭建 REST API，含中间件和数据库",
+      "summary": "Gin + GORM + Viper 组合搭建 Go Web API，中间件统一处理认证和日志",
+      "fix_strategy": "路由分组 Group，中间件链式，GORM 用结构体映射，配置用 viper",
+      "key_steps": [
+        "go mod init; go get github.com/gin-gonic/gin gorm.io/gorm gorm.io/driver/mysql",
+        "r := gin.Default(); api := r.Group('/api').Use(AuthMiddleware())",
+        "api.GET('/users', handler); api.POST('/users', handler)",
+        "db.AutoMigrate(&User{}) 自动建表",
+        "go env -w GOPROXY=https://goproxy.cn,direct 先设镜像"
+      ],
+      "problem_keywords": [
+        "gin",
+        "go",
+        "golang",
+        "rest",
+        "api",
+        "gorm"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "spring_boot_mybatis",
+      "task_type": "backend_api",
+      "task_description": "Spring Boot + MyBatis-Plus 搭建 Java 后端",
+      "summary": "Spring Boot + MyBatis-Plus + Druid 连接池搭建 Java 后端",
+      "fix_strategy": "Maven 用阿里云镜像，application.yml 配数据源，实体类用 Lombok 减少样板代码",
+      "key_steps": [
+        "pom.xml 加阿里云 Maven 镜像，添加 mybatis-plus-boot-starter 依赖",
+        "application.yml: spring.datasource.url/username/password/driver-class-name",
+        "@Data @TableName('user') class User extends Model<User>",
+        "@Mapper interface UserMapper extends BaseMapper<User>",
+        "UserMapper.selectList(null) 查所有，selectById(id) 按 ID 查"
+      ],
+      "problem_keywords": [
+        "spring",
+        "boot",
+        "mybatis",
+        "java",
+        "mysql",
+        "后端"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "react_hooks_state",
+      "task_type": "web",
+      "task_description": "React Hooks 状态管理，含 useState useEffect useCallback",
+      "summary": "Hooks 依赖数组要精确，避免无限循环，useCallback/useMemo 缓存函数和计算结果",
+      "fix_strategy": "useEffect 依赖只放必要的，函数用 useCallback 稳定引用，复杂状态用 useReducer",
+      "key_steps": [
+        "useEffect(() => { fetchData() }, [id]) 依赖 id 变化才重新请求",
+        "const fetchData = useCallback(() => {...}, [id]) 稳定函数引用",
+        "setState 函数式更新：setCount(prev => prev + 1) 避免闭包陷阱",
+        "清理副作用：useEffect(() => { ...; return () => cleanup() }, [])",
+        "useReducer 管理复杂状态：dispatch({type:'SET_USER', payload:user})"
+      ],
+      "problem_keywords": [
+        "react",
+        "hooks",
+        "useeffect",
+        "usestate",
+        "usecallback"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "playwright_scraper",
+      "task_type": "web_scraping",
+      "task_description": "用 Playwright 爬取动态加载的网页数据",
+      "summary": "Playwright 处理 JavaScript 动态渲染，支持等待元素、截图、登录状态保存",
+      "fix_strategy": "async 模式，等待元素出现再取数据，反爬注意设 headless=False 测试",
+      "key_steps": [
+        "pip install playwright; playwright install chromium",
+        "async with async_playwright() as p: browser = await p.chromium.launch(headless=True)",
+        "await page.wait_for_selector('.data-list', timeout=10000)",
+        "items = await page.query_selector_all('.item')",
+        "保存登录态：await context.storage_state(path='auth.json')"
+      ],
+      "problem_keywords": [
+        "playwright",
+        "爬虫",
+        "scraper",
+        "动态",
+        "javascript"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "feishu_bot_notify",
+      "task_type": "backend_api",
+      "task_description": "飞书机器人发送消息通知，含富文本和卡片消息",
+      "summary": "飞书 webhook 支持文本/富文本/卡片三种消息，安全设置用加签模式",
+      "fix_strategy": "用加签模式（timestamp+HMAC-SHA256），卡片消息比纯文本更美观",
+      "key_steps": [
+        "飞书群 → 添加机器人 → 自定义机器人 → 复制 webhook URL",
+        "加签：sign = base64(HMAC-SHA256(f'{timestamp}\\n{secret}'))",
+        "发文本：requests.post(webhook, json={'msg_type':'text','content':{'text':'消息'}})",
+        "发卡片：msg_type='interactive', card={'elements':[...]}",
+        "飞书开放平台建应用可发私聊，webhook 只能发群消息"
+      ],
+      "problem_keywords": [
+        "飞书",
+        "feishu",
+        "机器人",
+        "webhook",
+        "通知"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "dingtalk_bot",
+      "task_type": "backend_api",
+      "task_description": "钉钉自定义机器人发送消息，含加签安全验证",
+      "summary": "钉钉机器人安全设置推荐加签，HMAC-SHA256(timestamp+secret) 验签",
+      "fix_strategy": "加签比关键词方式更灵活，timestamp 精确到毫秒，URL 中带签名参数",
+      "key_steps": [
+        "钉钉群 → 智能群助手 → 添加机器人 → 自定义 → 安全设置选「加签」",
+        "timestamp = str(round(time.time() * 1000))",
+        "sign = base64(HMAC-SHA256(f'{timestamp}\\n{secret}').encode())",
+        "url = f'{webhook}&timestamp={timestamp}&sign={sign}'",
+        "requests.post(url, json={'msgtype':'text','text':{'content':'消息'}})"
+      ],
+      "problem_keywords": [
+        "钉钉",
+        "dingtalk",
+        "机器人",
+        "webhook",
+        "加签"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "python_packaging_pip",
+      "task_type": "python_script",
+      "task_description": "将 Python 项目打包发布到 PyPI",
+      "summary": "pyproject.toml 定义包信息，用 build + twine 发布，版本号语义化",
+      "fix_strategy": "pyproject.toml 定义包信息，build 生成分发包，先发 TestPyPI 验证",
+      "key_steps": [
+        "pyproject.toml: [project] name, version, dependencies",
+        "pip install build twine",
+        "python -m build 生成 dist/ 目录",
+        "twine upload --repository testpypi dist/* 先测试",
+        "twine upload dist/* 正式发布"
+      ],
+      "problem_keywords": [
+        "pypi",
+        "打包",
+        "发布",
+        "package",
+        "pip",
+        "publish"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "linux_process_manager",
+      "task_type": "python_script",
+      "task_description": "Linux 服务器用 systemd 管理 Python 应用进程",
+      "summary": "systemd service 管理 Python 进程，支持开机自启、崩溃重启、日志管理",
+      "fix_strategy": "unit 文件放 /etc/systemd/system/，After=network.target，Restart=on-failure",
+      "key_steps": [
+        "/etc/systemd/system/myapp.service 创建 unit 文件",
+        "[Service] ExecStart=/usr/bin/python3 /opt/myapp/main.py",
+        "Environment=PYTHONPATH=/opt/myapp 设环境变量",
+        "Restart=on-failure RestartSec=5 崩溃自动重启",
+        "systemctl daemon-reload && systemctl enable --now myapp"
+      ],
+      "problem_keywords": [
+        "systemd",
+        "service",
+        "linux",
+        "进程",
+        "守护",
+        "自启"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "git_workflow_team",
+      "task_type": "python_script",
+      "task_description": "团队 Git 工作流，含分支管理和 PR 流程",
+      "summary": "main 保护分支，feature 分支开发，PR 合并，tag 标记版本",
+      "fix_strategy": "main 只接受 PR，分支命名 feature/xxx fix/xxx，commit message 规范",
+      "key_steps": [
+        "git checkout -b feature/new-feature 创建功能分支",
+        "commit message: feat: 添加用户登录功能（Angular 规范）",
+        "git push origin feature/new-feature 推送分支",
+        "GitHub/Gitee 创建 PR → code review → squash merge",
+        "发版：git tag v1.0.0 && git push origin v1.0.0"
+      ],
+      "problem_keywords": [
+        "git",
+        "分支",
+        "workflow",
+        "pr",
+        "团队",
+        "版本"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "qrcode_wechat_login",
+      "task_type": "wechat_miniapp",
+      "task_description": "PC 网站扫码登录微信，实现一键授权",
+      "summary": "微信扫码登录用 OAuth2 流程，生成 state 防 CSRF，轮询或 SSE 推送扫码结果",
+      "fix_strategy": "后端生成带 state 的授权 URL，前端轮询登录状态，微信回调后写 session",
+      "key_steps": [
+        "引导 URL：https://open.weixin.qq.com/connect/qrconnect?appid=&redirect_uri=&response_type=code&scope=snsapi_login&state=random_state",
+        "appid 用开放平台的网站应用 appid（不是公众号 appid）",
+        "回调后用 code 换 access_token，再获取用户信息",
+        "前端每2秒轮询 /api/check-login?state=xxx",
+        "state 存 Redis 60秒 TTL，防重放攻击"
+      ],
+      "problem_keywords": [
+        "微信",
+        "扫码",
+        "登录",
+        "oauth",
+        "qrcode",
+        "pc"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "python_async_http",
+      "task_type": "python_script",
+      "task_description": "Python 异步并发请求多个接口，提升批量任务效率",
+      "summary": "asyncio + aiohttp 并发请求显著提升批量任务效率，用 semaphore 控制并发数",
+      "fix_strategy": "asyncio.gather 并发，Semaphore 限制同时请求数，超时和重试处理",
+      "key_steps": [
+        "pip install aiohttp",
+        "async with aiohttp.ClientSession() as session: async with session.get(url) as resp:",
+        "sem = asyncio.Semaphore(10) 限制10个并发",
+        "tasks = [fetch(url) for url in urls]; results = await asyncio.gather(*tasks)",
+        "asyncio.run(main()) 启动事件循环"
+      ],
+      "problem_keywords": [
+        "async",
+        "异步",
+        "aiohttp",
+        "并发",
+        "asyncio",
+        "批量"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "wecom_webhook",
+      "task_type": "backend_api",
+      "task_description": "企业微信机器人发送群消息通知",
+      "summary": "企业微信 webhook 直接 POST JSON 不需要签名，支持文本/Markdown/图片/文件",
+      "fix_strategy": "企业微信 webhook 不需要签名，支持文本/Markdown/图片/文件，Markdown 格式丰富",
+      "key_steps": [
+        "企业微信群 → 添加群机器人 → 复制 Webhook URL",
+        "发 Markdown：{msgtype:'markdown', markdown:{content:'# 标题\\n内容<font color=red>红色</font>'}}",
+        "发文本：{msgtype:'text', text:{content:'消息', mentioned_list:['@userid']}}",
+        "@所有人：mentioned_list:['@all']",
+        "requests.post(webhook_url, json=data) 直接发，无需签名"
+      ],
+      "problem_keywords": [
+        "企业微信",
+        "wecom",
+        "机器人",
+        "webhook",
+        "群消息"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "python_excel_report",
+      "task_type": "data_analysis",
+      "task_description": "Python 生成 Excel 报表，含格式和图表",
+      "summary": "openpyxl 写 Excel，xlsxwriter 做图表，pandas 处理数据后写出",
+      "fix_strategy": "pandas + openpyxl 组合：数据处理用 pandas，格式控制用 openpyxl",
+      "key_steps": [
+        "pip install openpyxl xlsxwriter",
+        "with pd.ExcelWriter('report.xlsx', engine='openpyxl') as writer: df.to_excel(writer, sheet_name='数据')",
+        "ws = wb.active; ws['A1'].font = Font(bold=True, size=14)",
+        "ws.column_dimensions['A'].width = 20 设列宽",
+        "输出 utf-8-sig 让 Excel 直接打开中文不乱码"
+      ],
+      "problem_keywords": [
+        "excel",
+        "报表",
+        "openpyxl",
+        "pandas",
+        "xlsxwriter",
+        "表格"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.0
+    },
+    {
+      "exp_id": "wechat_pay_app",
+      "task_type": "wechat_pay",
+      "task_description": "微信支付 APP 支付（非小程序），后端生成预付单返回给 APP",
+      "summary": "APP 支付需要两次签名：一次下单签名，一次返回给 APP 的支付信息签名。只返回 prepay_id 不够，APP 无法直接用",
+      "fix_strategy": "用 wechatpayv3 库，下单后调用 sign() 方法生成第二次签名参数返回给 APP",
+      "key_steps": [
+        "pip install wechatpayv3，WeChatPayType 选 APP",
+        "调用 wxpay.pay() 下单，得到 prepay_id",
+        "必须再用 wxpay.sign() 生成 {appId, partnerId, prepayId, packageValue, nonceStr, timestamp, sign} 返给 APP",
+        "APP 客户端用这7个参数调起微信支付，不能直接用 prepay_id",
+        "APP 支付的 appid 是开放平台的 appid，不是公众号或小程序的 appid"
+      ],
+      "problem_keywords": [
+        "微信支付",
+        "app支付",
+        "prepay_id",
+        "二次签名",
+        "apppay"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "wechat_pay_cert_dir",
+      "task_type": "wechat_pay",
+      "task_description": "微信支付 V3 平台证书管理，避免证书过期问题",
+      "summary": "wechatpayv3 支持平台证书自动更新，初始化时指定 cert_dir 即可，无需手动下载更新",
+      "fix_strategy": "WeChatPay 初始化时传 cert_dir 参数，SDK 自动下载和轮换证书",
+      "key_steps": [
+        "import os; os.makedirs('./cert', exist_ok=True)",
+        "WeChatPay(..., cert_dir='./cert') 指定证书缓存目录",
+        "首次调用会自动下载平台证书到 cert_dir",
+        "证书有效期内自动使用，过期自动更新",
+        "新申请商户号已不支持平台证书，使用支付公钥（public_key_id 带 PUB_KEY_ID_ 前缀）"
+      ],
+      "problem_keywords": [
+        "微信支付",
+        "平台证书",
+        "cert_dir",
+        "证书自动更新"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "docker_compose_networking",
+      "task_type": "backend_api",
+      "task_description": "Docker Compose 多容器通信，服务之间互相访问",
+      "summary": "Docker Compose 容器内不能用 localhost，要用服务名。Windows 宿主机用 host.docker.internal",
+      "fix_strategy": "application.yml 数据库 host 改为 docker-compose 服务名，volumes 挂载数据持久化",
+      "key_steps": [
+        "docker-compose.yml 的 Spring Boot 连接 MySQL：url: jdbc:mysql://db:3306/mydb（db 是 MySQL 服务名）",
+        "Redis 同理：host: redis（不是 localhost）",
+        "Windows 本地开发访问宿主机：host.docker.internal",
+        "数据库数据持久化：volumes: - mysql_data:/var/lib/mysql",
+        "depends_on: [db, redis] 确保依赖服务先启动"
+      ],
+      "problem_keywords": [
+        "docker",
+        "compose",
+        "localhost",
+        "服务名",
+        "通信",
+        "连接"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "springboot_yaml_special_chars",
+      "task_type": "backend_api",
+      "task_description": "Spring Boot application.yml 配置密码含特殊字符",
+      "summary": "YAML 中 # 是注释，@ 等特殊字符会导致解析失败，密码必须用双引号包裹",
+      "fix_strategy": "所有包含特殊字符的密码值用双引号包裹，JetCache URI 用 URL 编码",
+      "key_steps": [
+        "密码含 # 必须：password: \"root#123\"（不加引号 # 后面被当注释）",
+        "密码含 @ 必须加引号：password: \"p@ssword\"",
+        "JetCache URI 中密码用 URL 编码：redis://123%40!@host:6379/0",
+        "用 echo 'spring.datasource.password=' 测试实际读取值",
+        "Nacos 配置中心同样需要注意 YAML 格式和缩进"
+      ],
+      "problem_keywords": [
+        "spring",
+        "yaml",
+        "密码",
+        "特殊字符",
+        "配置",
+        "#"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "vue3_vfor_vif",
+      "task_type": "web",
+      "task_description": "Vue3 列表渲染并过滤，v-for 和 v-if 配合使用",
+      "summary": "Vue3 v-if 优先级高于 v-for，不能在同一元素上同时使用，用 template 包裹或 computed 过滤",
+      "fix_strategy": "用 <template v-for> 外层包裹，v-if 放内层；或 computed 先过滤数组",
+      "key_steps": [
+        "错误写法：<li v-for='item in list' v-if='item.active'>",
+        "正确写法1：<template v-for='item in list'><li v-if='item.active'>",
+        "正确写法2：computed: activeList = list.filter(i=>i.active)，然后 v-for='item in activeList'",
+        "v-for 必须加 :key='item.id'，不要用 index 作 key（删除元素时会出错）",
+        "Vue3 中 v-for 的 key 直接放在 <template> 上"
+      ],
+      "problem_keywords": [
+        "vue3",
+        "v-for",
+        "v-if",
+        "列表",
+        "过滤",
+        "key"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "vue3_cleanup",
+      "task_type": "web",
+      "task_description": "Vue3 组件卸载时清理定时器和事件监听，防止内存泄漏",
+      "summary": "setInterval/addEventListener 在组件销毁后继续运行，必须在 onUnmounted 清理",
+      "fix_strategy": "所有副作用在 onUnmounted 中清理，WebSocket 断开，EventSource 关闭",
+      "key_steps": [
+        "const timer = setInterval(fn, 1000)",
+        "onUnmounted(() => { clearInterval(timer) })",
+        "EventSource/WebSocket：onUnmounted(() => { ws.close() })",
+        "window.addEventListener：onUnmounted(() => { window.removeEventListener('resize', fn) })",
+        "useEventListener（vueuse）自动处理清理，推荐使用"
+      ],
+      "problem_keywords": [
+        "vue3",
+        "内存泄漏",
+        "setinterval",
+        "onunmounted",
+        "清理",
+        "事件"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "redis_cache_design",
+      "task_type": "backend_api",
+      "task_description": "Redis 缓存设计，解决缓存穿透、击穿、雪崩",
+      "summary": "三个缓存问题有不同解法：穿透用布隆过滤器或空值缓存，击穿用互斥锁，雪崩用随机TTL",
+      "fix_strategy": "生产环境必须考虑三种缓存问题，不能只做简单的 get/set",
+      "key_steps": [
+        "缓存穿透（key不存在）：空值也缓存，TTL设短（60s）；或 redis-py-bloom 布隆过滤器",
+        "缓存击穿（热key过期）：setnx 实现分布式锁，一个请求重建缓存其他等待",
+        "缓存雪崩（大量key同时过期）：TTL加随机抖动 300 + random.randint(0, 60)",
+        "key命名规范：业务:对象:id，如 user:profile:123",
+        "监控：redis-cli monitor 或 slowlog get 10 查慢查询"
+      ],
+      "problem_keywords": [
+        "redis",
+        "缓存",
+        "穿透",
+        "击穿",
+        "雪崩",
+        "cache"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 9.0
+    },
+    {
+      "exp_id": "python_async_best_practices",
+      "task_type": "python_script",
+      "task_description": "Python asyncio 异步编程最佳实践，避免常见坑",
+      "summary": "asyncio 核心原则：不阻塞事件循环，用 asyncio.run() 启动，CPU密集任务用进程池",
+      "fix_strategy": "所有 IO 操作用 async/await，阻塞操作放 executor，超时用 asyncio.wait_for",
+      "key_steps": [
+        "asyncio.run(main()) 是唯一正确的启动方式（Python 3.7+）",
+        "阻塞IO用线程池：await loop.run_in_executor(None, blocking_fn)",
+        "CPU密集用进程池：ProcessPoolExecutor",
+        "超时控制：await asyncio.wait_for(coro, timeout=30.0)",
+        "并发控制：asyncio.Semaphore(10) 限制同时协程数"
+      ],
+      "problem_keywords": [
+        "asyncio",
+        "async",
+        "await",
+        "异步",
+        "协程",
+        "事件循环"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "aliyun_sms",
+      "task_type": "backend_api",
+      "task_description": "接入阿里云短信发送验证码",
+      "summary": "阿里云短信 SDK 用 AlibabaCloud 客户端，签名和模板都需提前申请",
+      "fix_strategy": "pip install alibabacloud-dysmsapi20170525，用 AccessKey + Secret，注意 endpoint 区域",
+      "key_steps": [
+        "pip install alibabacloud-dysmsapi20170525",
+        "client = Dysmsapi20170525Client(Config(access_key_id=AK, access_key_secret=SK, endpoint='dysmsapi.aliyuncs.com'))",
+        "request = SendSmsRequest(phone_numbers='手机号', sign_name='签名', template_code='SMS_xxx', template_param='{\"code\":\"1234\"}')",
+        "response = client.send_sms(request)",
+        "验证码存 Redis：r.setex(f'sms:{phone}', 300, code)，5分钟TTL"
+      ],
+      "problem_keywords": [
+        "阿里云",
+        "短信",
+        "sms",
+        "验证码",
+        "alibabacloud"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    },
+    {
+      "exp_id": "nginx_wechat_miniapp",
+      "task_type": "wechat_miniapp",
+      "task_description": "为微信小程序配置 HTTPS 服务器，解决域名合法性问题",
+      "summary": "微信小程序要求所有域名 HTTPS + 备案 + 在控制台白名单，本地开发可关闭校验",
+      "fix_strategy": "生产域名用 certbot 签证书，nginx 配置 ssl，开发环境开发工具关闭域名校验",
+      "key_steps": [
+        "certbot --nginx -d api.yourdomain.com 申请证书",
+        "nginx ssl_certificate 和 ssl_certificate_key 配置证书路径",
+        "mp.weixin.qq.com 控制台→开发设置→服务器域名 填 https://api.yourdomain.com",
+        "开发环境：微信开发者工具→详情→本地设置→不校验合法域名",
+        "域名必须已备案，IP 地址不能用，端口只能用 443"
+      ],
+      "problem_keywords": [
+        "微信小程序",
+        "nginx",
+        "https",
+        "域名",
+        "备案",
+        "ssl"
+      ],
+      "success": true,
+      "hit_count": 0,
+      "timestamp": 0,
+      "score": 8.5
+    }
+  ]
+}

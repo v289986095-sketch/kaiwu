@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cl-kaiwu"
+version = "0.2.0"
+description = "开物 — AI Coding 增强引擎，为 Claude Code / Cursor / Codex 等主流工具提供 DeepSeek 辅助规划、经验库、报错库、中国场景库"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "kaiwu", email = "valhuang@kaiwucl.com" },
+]
+keywords = ["mcp", "ai-coding", "deepseek", "claude-code", "cursor", "copilot", "coding-assistant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    "openai>=1.0",
+    "mcp[cli]>=1.0",
+    "click>=8.0",
+    "loguru>=0.7",
+    "filelock>=3.12",
+    "rich>=13.0",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+kaiwu = "kaiwu.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/v289986095-sketch/kaiwu"
+Issues = "https://github.com/v289986095-sketch/kaiwu/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kaiwu"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["_backup_old/", "data/error_kb_backup.json", "kaiwu-official-site.html", "产品核心.md", "CLA.md"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"data" = "data"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
