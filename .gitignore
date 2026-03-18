@@ -22,6 +22,14 @@ env/
 .DS_Store
 Thumbs.db
 
+# Test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.pytest_cache/
+
 # Project-specific
 _backup_old/
 data/error_kb_backup.json
