@@ -446,22 +446,67 @@ def _install_claude_code(project: Path):
         claude_md.write_text(content, encoding="utf-8")
 
 
+def _find_plugin_root() -> Path | None:
+    """查找 kaiwu 插件根目录（含 .claude-plugin/plugin.json 的目录）
+
+    查找顺序：
+    1. __file__ 的 parent.parent（开发模式 pip install -e）
+    2. pip show kaiwu 的 Location/Editable project location
+    3. 当前工作目录
+    """
+    import subprocess as sp
+
+    # 1. 直接从源码路径推断
+    candidate = Path(__file__).parent.parent.resolve()
+    if (candidate / ".claude-plugin" / "plugin.json").exists():
+        return candidate
+
+    # 2. 从 pip show 获取（处理 editable install）
+    try:
+        result = sp.run(
+            [sys.executable, "-m", "pip", "show", "kaiwu"],
+            capture_output=True, text=True, timeout=10
+        )
+        for line in result.stdout.split("\n"):
+            # Editable project location: D:\kaiwu\kaiwu0.2
+            if line.startswith("Editable project location:"):
+                loc = Path(line.split(":", 1)[1].strip())
+                if (loc / ".claude-plugin" / "plugin.json").exists():
+                    return loc
+            # Location: D:\kaiwu\kaiwu0.2 (非 site-packages 的情况)
+            if line.startswith("Location:"):
+                loc = Path(line.split(":", 1)[1].strip())
+                if (loc / ".claude-plugin" / "plugin.json").exists():
+                    return loc
+    except Exception:
+        pass
+
+    # 3. 当前工作目录
+    cwd = Path.cwd()
+    if (cwd / ".claude-plugin" / "plugin.json").exists():
+        return cwd
+
+    return None
+
+
 def _install_claude_code_plugin():
     """安装 kaiwu 为 Claude Code Plugin（通过 junction 链接）"""
     import subprocess as sp
 
-    plugin_root = Path(__file__).parent.parent.resolve()
-    plugins_dir = Path.home() / ".claude" / "plugins"
-    target = plugins_dir / "kaiwu"
-
     console.print("\n[bold cyan]安装 kaiwu 为 Claude Code Plugin[/bold cyan]\n")
 
-    # 1. 检查插件清单是否存在
-    manifest = plugin_root / ".claude-plugin" / "plugin.json"
-    if not manifest.exists():
-        console.print(f"  [red]FAIL[/red] 插件清单不存在: {manifest}")
-        console.print("  请确保在 kaiwu 仓库根目录运行此命令")
+    plugin_root = _find_plugin_root()
+    if plugin_root is None:
+        console.print("  [red]FAIL[/red] 未找到 kaiwu 插件根目录（需要含 .claude-plugin/plugin.json）")
+        console.print()
+        console.print("  可能原因：通过 pip install 安装时源码未包含插件文件")
+        console.print("  解决方法：请在 kaiwu 仓库根目录下运行此命令：")
+        console.print("    cd <kaiwu仓库路径>")
+        console.print("    kaiwu install --plugin")
         return
+
+    plugins_dir = Path.home() / ".claude" / "plugins"
+    target = plugins_dir / "kaiwu"
 
     console.print(f"  [green]OK[/green] 插件清单: {manifest}")
 
