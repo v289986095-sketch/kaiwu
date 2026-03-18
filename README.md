@@ -130,13 +130,13 @@ web · react · dataviz · python_script · backend_api · data_analysis · web_
 ### 1. 安装包
 
 ```bash
-pip install git+https://github.com/v289986095-sketch/kaiwu.git
+pip install git+https://github.com/val1813/kaiwu.git
 ```
 
 或者克隆到本地安装：
 
 ```bash
-git clone https://github.com/v289986095-sketch/kaiwu.git
+git clone https://github.com/val1813/kaiwu.git
 cd kaiwu
 pip install .
 ```

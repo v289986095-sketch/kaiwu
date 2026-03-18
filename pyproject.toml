@@ -45,8 +45,8 @@ dev = [
 kaiwu = "kaiwu.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/v289986095-sketch/kaiwu"
-Issues = "https://github.com/v289986095-sketch/kaiwu/issues"
+Homepage = "https://github.com/val1813/kaiwu"
+Issues = "https://github.com/val1813/kaiwu/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["kaiwu"]
