@@ -519,7 +519,7 @@ def _install_claude_code_plugin():
     plugins_dir = Path.home() / ".claude" / "plugins"
     target = plugins_dir / "kaiwu"
 
-    console.print(f"  [green]OK[/green] 插件清单: {manifest}")
+    console.print(f"  [green]OK[/green] 插件根目录: {plugin_root}")
 
     # 2. 模板化 .mcp.json 中的 Python 路径
     mcp_json_path = plugin_root / ".mcp.json"
