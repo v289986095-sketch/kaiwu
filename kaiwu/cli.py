@@ -610,8 +610,27 @@ def _install_claude_code_plugin():
         except Exception:
             pass
 
-    # 5. 检查旧 MCP 注册并提示
+    # 5. 在 settings.json 中启用插件（enabledPlugins）
     claude_settings = Path.home() / ".claude" / "settings.json"
+    try:
+        if claude_settings.exists():
+            data = json.loads(claude_settings.read_text(encoding="utf-8"))
+        else:
+            data = {}
+
+        enabled = data.get("enabledPlugins", {})
+        enabled["kaiwu@kaiwu"] = True
+        data["enabledPlugins"] = enabled
+        claude_settings.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
+        console.print(f"  [green]OK[/green] 已启用插件 (enabledPlugins)")
+    except Exception as e:
+        console.print(f"  [yellow]WARN[/yellow] enabledPlugins 写入失败: {e}")
+        console.print("  请手动在 settings.json 中添加: \"enabledPlugins\": {\"kaiwu@kaiwu\": true}")
+
+    # 6. 检查旧 MCP 注册并提示
     if claude_settings.exists():
         try:
             data = json.loads(claude_settings.read_text(encoding="utf-8"))
