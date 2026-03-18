@@ -17,7 +17,7 @@ from kaiwu.task_classifier import classify_task, should_inject_knowledge, TaskVe
 
 # 配置日志
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-logger.add(str(LOG_PATH), rotation="5 MB", retention="3 days", level="DEBUG")
+logger.add(str(LOG_PATH), rotation="5 MB", retention="3 days", level="DEBUG", encoding="utf-8")
 
 # 创建 MCP Server
 mcp = FastMCP(
