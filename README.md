@@ -1,16 +1,15 @@
 # cl-kaiwu 开物 v0.2---内嵌deepseek的claude code/codex/cursor的超级职能外挂
+先看疗效
+<img width="1376" height="388" alt="image" src="https://github.com/user-attachments/assets/6a340d12-0b81-45c4-8a60-90166e5fa68c" />
 
-    一个命令---让你用haiku跑出sonnet的感觉  
-    把coding平台做成越用越懂你，错误不犯2次的工具。  
-    最终实现-----**模型平权**  
-    更懂中国开发者----持续更新中国知识库（我刚更新了麻将番数计算）  
+<img width="1272" height="1396" alt="image" src="https://github.com/user-attachments/assets/85174b8a-9f17-47e8-8199-638e0d31ebd3" />
 
 ------------------------------
 核心优势：
-1、模型同权-----不管贵的模型还是便宜的都能跑出一样的质量和效率（宣传话术，还有距离）    
-2、省token，综合测试根据任务不同程度和中国相关性节约20%-60%
-3、让AI能跨session，理解你，懂你，预测你下一个问题
-4、越用越得劲，错误包多了、经验包多了，就越懂事了。
+1、模型同权-----不管贵的模型还是便宜的都能跑出一样的质量和效率（宣传话术，还有距离）     
+2、省token，综合测试根据任务不同程度和中国相关性节约20%-60% 
+3、让AI能跨session，理解你，懂你，预测你下一个问题 
+4、越用越得劲，错误包多了、经验包多了，就越懂事了。 
 -----------------------------
 
     有问题联系 我QQ154882199 
@@ -69,9 +68,6 @@ deepseek统领经验库、错误库还有个自作聪明的中国经验库。给
 后面会发布云端版，收集大家错误，然后共享    
 （等我的网站ICP和我个体工商户弄出来，到时候收费！！！）    
 我测过几次数据 大概水平（测试偏短，大家可以尝试，备好deepseekkey，冲5快不要多）：    
-<img width="1272" height="1396" alt="image" src="https://github.com/user-attachments/assets/85174b8a-9f17-47e8-8199-638e0d31ebd3" />
-
-<img width="1376" height="388" alt="image" src="https://github.com/user-attachments/assets/6a340d12-0b81-45c4-8a60-90166e5fa68c" />
 
 
  后面会上云端，希望到时大家多共享，到时根据共享给大家算积分，共享成果，数据库拿出来贡献给国家
