@@ -47,6 +47,17 @@ DATA_DIR = PACKAGE_DIR.parent / "data"
 SCENES_DIR = PACKAGE_DIR / "scenes"
 KNOWLEDGE_DIR = PACKAGE_DIR / "knowledge"
 
+# 噪声目录集合（用于文件树过滤）
+NOISE_DIRS: frozenset[str] = frozenset({
+    "node_modules", "__pycache__", ".git", ".svn", ".hg",
+    "venv", ".venv", "env", ".env",
+    "dist", "build", ".next", ".nuxt", ".output",
+    ".cache", ".parcel-cache", ".turbo",
+    "target", ".idea", ".vscode",
+    "coverage", ".coverage", "htmlcov",
+    "eggs", ".eggs", "logs", "tmp", "temp",
+})
+
 # ── 计划（v1.0 全部免费，后续版本区分权益） ──────────────────────
 
 PLAN_FREE = "free"          # 免费版（v1.0 默认，功能完整）
