@@ -759,7 +759,16 @@ def _install_mcp_server():
         data["mcpServers"]["kaiwu"] = mcp_config
 
         # 注册 SessionStart hook — 让模型知道 kaiwu 已加载
-        hook_cmd = f'{python_path} -m kaiwu.notify'
+        # 用 python -c 内联脚本，不依赖 kaiwu 包版本（避免 site-packages 旧版无 notify.py）
+        notify_script = (
+            'import json;'
+            'print(json.dumps({"continue":True,"suppressOutput":False,'
+            '"systemMessage":"[kaiwu active] kaiwu AI coding enhancement loaded. '
+            'Tools: kaiwu_plan, kaiwu_lessons, kaiwu_record, kaiwu_context, kaiwu_condense, kaiwu_scene, kaiwu_profile. '
+            'new task->kaiwu_plan, error->kaiwu_lessons, done->kaiwu_record. '
+            'Pass host_level=strong or host_model to each call."}))'
+        )
+        hook_cmd = f'{python_path} -c "{notify_script}"'
         kaiwu_hook = {
             "matcher": "*",
             "hooks": [{
