@@ -619,6 +619,29 @@ def kaiwu_profile(host_level: str = "", host_model: str = "") -> str:
         return "画像加载失败"
 
 
+@mcp.tool()
+def kaiwu_ping() -> str:
+    """验证 kaiwu MCP 连接是否正常
+
+    返回服务状态、版本、LLM 配置信息。用于确认 kaiwu 已成功接入。
+    """
+    try:
+        config = get_config()
+        result = {
+            "status": "ok",
+            "message": "kaiwu is active and ready",
+            "version": "0.2.0",
+            "llm_configured": bool(config.llm_api_key),
+            "llm_provider": config.active_provider_name if config.llm_api_key else "none",
+            "kaiwu_home": str(KAIWU_HOME),
+        }
+        logger.info("kaiwu_ping: ok")
+        return json.dumps(result, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"kaiwu_ping 失败: {e}")
+        return json.dumps({"status": "error", "message": str(e)})
+
+
 def main():
     """启动 MCP Server"""
     logger.info("cl-kaiwu MCP Server 启动中...")
