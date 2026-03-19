@@ -332,6 +332,7 @@ def kaiwu_record(
     project_name: str = "",
     host_level: str = "",
     host_model: str = "",
+    trace: str = "",
 ) -> str:
     """记录任务结果（智能蒸馏决策）
 
@@ -353,6 +354,7 @@ def kaiwu_record(
         project_name: 项目名
         host_level: 主AI能力等级
         host_model: 主AI模型名
+        trace: 执行轨迹JSON数组（可选）。每项: {"turn": 1, "action": "读取文件", "outcome": "发现bug", "success": true, "pivot": false}
     """
     try:
         from kaiwu.recorder import record_outcome
@@ -366,6 +368,17 @@ def kaiwu_record(
                     anchors_list = None
             except json.JSONDecodeError:
                 anchors_list = None
+
+        # 解析 trace
+        trace_steps = None
+        if trace.strip():
+            try:
+                from kaiwu.storage.experience import TraceStep
+                raw = json.loads(trace)
+                if isinstance(raw, list):
+                    trace_steps = [TraceStep.from_dict(s) for s in raw[:25]]
+            except (json.JSONDecodeError, Exception):
+                trace_steps = None
 
         level = infer_host_level(host_level, host_model)
         cfg = get_config()
@@ -413,6 +426,8 @@ def kaiwu_record(
             subtask_seq=subtask_seq,
             anchors=anchors_list,
             project_name=project_name,
+            trace_steps=trace_steps,
+            host_level=level,
         )
         result = outcome["message"]
         exp_id = outcome.get("exp_id", "")

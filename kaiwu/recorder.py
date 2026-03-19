@@ -22,6 +22,7 @@ from kaiwu.config import (
     MEMORY_LAYER_ANCHOR,
     MEMORY_LAYER_EXP,
     MEMORY_LAYER_LOG,
+    MEMORY_LAYER_METHOD,
 )
 from kaiwu.llm_client import call_llm
 from kaiwu.quota import check_quota, record_call
@@ -80,6 +81,168 @@ _DISTILL_SYSTEM = """\
 用动词描述步骤（"配置…"、"安装…"、"检查…"），不要下结论性判断。
 """
 
+# ── 轨迹审计提示词 ─────────────────────────────────────────────────
+
+_AUDIT_SYSTEM = """\
+你是编程方法论分析师。分析 AI 编程助手的执行轨迹，提炼可复用的方法论模式。
+
+# 输出格式
+严格返回 JSON：
+{
+  "pivot_turn": 5,
+  "pivot_description": "从直接修改配置改为先读取再增量修改",
+  "pattern": {
+    "situation": "需要修改已有配置文件时",
+    "good_approach": "先读取现有内容，理解结构，再做增量修改",
+    "bad_approach": "直接覆盖写入完整配置",
+    "reason": "直接覆盖容易丢失已有配置项，导致其他功能异常"
+  },
+  "confidence": 0.8
+}
+
+# 规则
+1. situation: 触发条件（什么时候适用），不超过30字
+2. good_approach / bad_approach: 方法论（怎么做），不超过50字
+3. reason: 为什么（一句话），不超过50字
+4. 只提炼方法论，不写具体代码/路径/值/版本号
+5. confidence: 0.5-1.0，越通用越高
+6. 轨迹太简单无明显转折 → {"pivot_turn": null, "pattern": null, "confidence": 0}
+7. 只输出 JSON，不要 markdown 代码块
+"""
+
+
+# ── 轨迹审计门控与引擎 ─────────────────────────────────────────────
+
+def _should_audit(
+    success: bool,
+    turns: int,
+    trace_steps: list,
+    host_level: str,
+) -> bool:
+    """选择性审计 — 只审计有故事的轨迹"""
+    if not trace_steps:
+        return False
+    if len(trace_steps) < 4:
+        return False
+    # 失败 + 步骤多 → 分析哪里走错了
+    if not success and turns >= 5:
+        return True
+    # 成功但经历过失败步骤 → 有转折点
+    failed_steps = sum(1 for s in trace_steps if not s.success)
+    if success and failed_steps >= 2:
+        return True
+    # 主 AI 自标了 pivot → 一定审计
+    if any(s.pivot for s in trace_steps):
+        return True
+    # strong 模型不需要方法论帮助
+    if host_level == "strong":
+        return False
+    # 长任务成功 → 可能有值得提炼的经验
+    if success and turns >= 6:
+        return True
+    return False
+
+
+def _audit_trace(task, task_type, trace_steps, success, turns):
+    """调用 DeepSeek 分析轨迹，提取方法论模式
+
+    Returns:
+        dict with pattern info, or None if no pattern found.
+    """
+    from kaiwu.quota import check_quota, record_call
+
+    allowed, _ = check_quota()
+    if not allowed:
+        return None
+
+    # 构建 user prompt
+    lines = [f"# 任务\n{task[:300]}"]
+    lines.append(f"# 结果: {'成功' if success else '失败'}, {turns} 轮")
+    lines.append("# 执行轨迹")
+    for s in trace_steps[:20]:
+        marker = "OK" if s.success else "FAIL"
+        pivot = " [PIVOT]" if s.pivot else ""
+        lines.append(f"Turn {s.turn} [{marker}]{pivot}: {s.action} → {s.outcome}")
+
+    try:
+        raw = call_llm(
+            messages=[
+                {"role": "system", "content": _AUDIT_SYSTEM},
+                {"role": "user", "content": "\n".join(lines)},
+            ],
+            max_tokens=300,
+            temperature=0.3,
+            timeout=DEFAULT_TIMEOUT,
+        )
+        record_call()
+
+        text = raw.strip()
+        if text.startswith("```"):
+            text_lines = text.split("\n")
+            text_lines = [l for l in text_lines if not l.strip().startswith("```")]
+            text = "\n".join(text_lines)
+
+        data = json.loads(text)
+
+        confidence = data.get("confidence", 0)
+        pattern = data.get("pattern")
+        if not pattern or confidence < 0.6:
+            logger.debug(f"审计结果置信度不足: confidence={confidence}")
+            return None
+
+        # 验证 pattern 必要字段
+        for key in ("situation", "good_approach", "bad_approach", "reason"):
+            if not pattern.get(key):
+                return None
+
+        return {
+            "pivot_turn": data.get("pivot_turn"),
+            "pivot_description": data.get("pivot_description", ""),
+            "pattern": pattern,
+            "confidence": confidence,
+        }
+    except Exception as e:
+        logger.debug(f"轨迹审计 LLM 调用失败: {e}")
+        return None
+
+
+def _store_pattern(pattern_dict, task_type, turns, success, project_name):
+    """将方法论模式存入经验库"""
+    from kaiwu.storage.experience import MEMORY_TAG_METHOD
+
+    exp_store = get_experience_store()
+    # situation 可能很短，拼接 good_approach 确保超过 15 字符的最低长度
+    task_desc = f"[方法论] {pattern_dict['situation']}→{pattern_dict['good_approach']}"
+    exp_store.record(
+        task=task_desc,
+        task_type=task_type,
+        success=True,
+        summary=f"{pattern_dict['situation']}→{pattern_dict['good_approach']}",
+        key_steps=[
+            f"推荐: {pattern_dict['good_approach']}",
+            f"避免: {pattern_dict['bad_approach']}",
+            f"原因: {pattern_dict['reason']}",
+        ],
+        turns=turns,
+        memory_tag=MEMORY_TAG_METHOD,
+        project_name=project_name,
+    )
+    logger.info(f"方法论模式已存入: {pattern_dict['situation'][:50]}")
+
+
+def audit_async(task, task_type, trace_steps, success, turns, project_name):
+    """后台线程执行轨迹审计"""
+    def worker():
+        try:
+            result = _audit_trace(task, task_type, trace_steps, success, turns)
+            if result and result.get("pattern"):
+                _store_pattern(result["pattern"], task_type, turns, success, project_name)
+        except Exception as e:
+            logger.debug(f"异步审计失败: {e}")
+
+    t = threading.Thread(target=worker, name="audit-trace", daemon=True)
+    t.start()
+
 
 def record_outcome(
     task: str,
@@ -93,6 +256,8 @@ def record_outcome(
     subtask_seq: int = 0,
     anchors: Optional[list[str]] = None,
     project_name: str = "",
+    trace_steps: Optional[list] = None,
+    host_level: str = "",
 ) -> dict[str, str]:
     """记录任务结果到经验库和错误库
 
@@ -107,6 +272,8 @@ def record_outcome(
         subtask_seq: 子任务序号（> 0 时记录检查点）
         anchors: 本轮产生的决策锚点（高权重，存入 Session ANCHOR 层）
         project_name: 所属项目名（空则全局共享，非空则经验归属该项目）
+        trace_steps: 执行轨迹步骤列表（可选，list[TraceStep]）
+        host_level: 主AI能力等级（传给审计门控）
 
     Returns:
         dict: {"message": str, "exp_id": str}
@@ -165,6 +332,11 @@ def record_outcome(
                 logger.debug(f"错误已记录到会话 error_history: {error_type[:50]}")
             except Exception as e:
                 logger.debug(f"记录错误到会话失败: {e}")
+
+        # 轨迹审计
+        if trace_steps and _should_audit(success, turns, trace_steps, host_level):
+            audit_async(task, task_type, trace_steps, success, turns, project_name)
+            result += "; 轨迹审计已启动"
 
         return {"message": result, "exp_id": exp_id}
     except Exception as e:

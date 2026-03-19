@@ -40,6 +40,7 @@ MAX_OBSERVATION_TOKENS = 500   # 单条观察的最大 token（~1500 字符）
 MEMORY_LAYER_ANCHOR = "anchor"        # 决策锚点：永久保留，高权重
 MEMORY_LAYER_EXP = "experience"       # 经验摘要：中权重，参与 few-shot
 MEMORY_LAYER_LOG = "log"              # 操作日志：低权重，可定期清理
+MEMORY_LAYER_METHOD = "methodology"   # 方法论模式层
 
 # 包内数据目录
 PACKAGE_DIR = Path(__file__).parent
