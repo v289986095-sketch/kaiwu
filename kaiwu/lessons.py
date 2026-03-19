@@ -157,6 +157,7 @@ def get_lessons(error_text: str, context: str = "", session_id: str = "",
             max_tokens=DEFAULT_MAX_TOKENS,
             temperature=0.2,
             timeout=DEFAULT_TIMEOUT,
+            purpose="lessons",
         )
         record_call()
 

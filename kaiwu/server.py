@@ -146,6 +146,23 @@ def _lightweight_plan(task: str, context: str, session_id: str,
                                                  limit=3)
         if exp_ctx:
             result["experience"] = exp_ctx
+            # 记录注入了哪些经验 ID，供 kaiwu_record 计算助攻率
+            injected_ids = getattr(exp_store, "_last_injected_ids", [])
+            if injected_ids and session_id:
+                try:
+                    from kaiwu.session import SessionManager
+                    mgr = SessionManager()
+                    session_data = mgr.get(session_id)
+                    if session_data is not None:
+                        import json as _json
+                        session_path = mgr._path(session_id)
+                        session_data["_injected_exp_ids"] = injected_ids
+                        session_path.write_text(
+                            _json.dumps(session_data, ensure_ascii=False, indent=2),
+                            encoding="utf-8",
+                        )
+                except Exception as e:
+                    logger.debug(f"写入 injected_exp_ids 失败: {e}")
 
     # ── 会话上下文（有就给） ─────────────────────────────────────
     if session_id:
@@ -158,6 +175,25 @@ def _lightweight_plan(task: str, context: str, session_id: str,
                 result["session_id"] = session.session_id
         except Exception as e:
             logger.debug(f"加载会话上下文失败: {e}")
+
+    # ── 将规划步骤写入 session，供 plan vs trace 对比使用 ────────
+    if session_id and verdict.level in ("active", "rescue"):
+        try:
+            from kaiwu.session import SessionManager
+            import json as _json
+            mgr = SessionManager()
+            session_data = mgr.get(session_id)
+            if session_data is not None:
+                session_data["_plan_result"] = {
+                    "verdict": verdict.level,
+                    "steps": result.get("steps", []),
+                }
+                mgr._path(session_id).write_text(
+                    _json.dumps(session_data, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+        except Exception as e:
+            logger.debug(f"写入 plan_result 到 session 失败: {e}")
 
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -441,6 +477,22 @@ def kaiwu_record(
         # 成功时：回写 session 中之前未解决错误的解决方案到 ErrorKB
         if success and session_id:
             _backfill_error_solutions(session_id, task)
+
+        # 成功时：记录经验助攻率
+        if success and session_id:
+            try:
+                from kaiwu.session import SessionManager
+                from kaiwu.storage import get_experience_store
+                mgr = SessionManager()
+                session_data = mgr.get(session_id)
+                if session_data:
+                    injected_ids = session_data.get("_injected_exp_ids", [])
+                    if injected_ids:
+                        exp_store = get_experience_store()
+                        exp_store.record_assist(injected_ids)
+                        logger.debug(f"助攻率已更新: {injected_ids}")
+            except Exception as e:
+                logger.debug(f"记录助攻率失败: {e}")
 
         return result
     except Exception as e:

@@ -180,6 +180,7 @@ def get_plan(task: str, context: str = "", session_id: str = "",
             max_tokens=DEFAULT_MAX_TOKENS,
             temperature=0.3,
             timeout=DEFAULT_TIMEOUT,
+            purpose="plan",
         )
         record_call()
 

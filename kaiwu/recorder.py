@@ -206,6 +206,7 @@ def _audit_trace(task, task_type, trace_steps, success, turns, host_level=""):
             max_tokens=300,
             temperature=0.3,
             timeout=DEFAULT_TIMEOUT,
+            purpose="audit",
         )
         record_call()
 
@@ -275,6 +276,64 @@ def audit_async(task, task_type, trace_steps, success, turns, project_name, host
 
     t = threading.Thread(target=worker, name="audit-trace", daemon=True)
     t.start()
+
+
+# ── plan vs trace 零 token 对比 ──────────────────────────────────
+
+def _compare_plan_vs_trace(session_id: str, trace_steps: list) -> dict:
+    """零 token 对比规划 vs 实际轨迹
+
+    Returns:
+        {"overlap": 0.0-1.0, "diverged": bool, "plan_steps": int, "trace_steps": int}
+        空 dict 表示无法对比（无规划数据或无轨迹）
+    """
+    if not session_id or not trace_steps:
+        return {}
+
+    try:
+        from kaiwu.session import SessionManager
+        from kaiwu.storage.experience import _extract_keywords
+
+        mgr = SessionManager()
+        session_data = mgr.get(session_id)
+        if not session_data:
+            return {}
+
+        plan_data = session_data.get("_plan_result", {})
+        if not plan_data:
+            return {}
+
+        plan_steps = plan_data.get("steps", [])
+        if not plan_steps:
+            return {}
+
+        # 提取 plan 关键词（steps 可能是 dict 列表或字符串列表）
+        plan_texts = []
+        for s in plan_steps:
+            if isinstance(s, dict):
+                plan_texts.append(s.get("action", "") or s.get("title", "") or str(s))
+            else:
+                plan_texts.append(str(s))
+        plan_kw = set(_extract_keywords(" ".join(plan_texts)))
+
+        # 提取 trace 关键词
+        trace_kw = set(_extract_keywords(" ".join(s.action for s in trace_steps)))
+
+        if not plan_kw or not trace_kw:
+            return {}
+
+        overlap = len(plan_kw & trace_kw) / max(len(plan_kw), len(trace_kw))
+
+        return {
+            "overlap": round(overlap, 2),
+            "diverged": overlap < 0.3,
+            "plan_steps": len(plan_steps),
+            "trace_steps": len(trace_steps),
+        }
+    except Exception as e:
+        logger.debug(f"plan vs trace 对比失败: {e}")
+        return {}
+
 
 
 def record_outcome(
@@ -366,8 +425,17 @@ def record_outcome(
             except Exception as e:
                 logger.debug(f"记录错误到会话失败: {e}")
 
+        # plan vs trace 零 token 对比（路线偏离时提升审计优先级）
+        already_auditing = trace_steps and _should_audit(success, turns, trace_steps, host_level)
+        if trace_steps and session_id:
+            comparison = _compare_plan_vs_trace(session_id, trace_steps)
+            if comparison.get("diverged") and not already_auditing:
+                audit_async(task, task_type, trace_steps, success, turns, project_name, host_level)
+                result += "; 路线偏离审计已启动"
+                already_auditing = True
+
         # 轨迹审计
-        if trace_steps and _should_audit(success, turns, trace_steps, host_level):
+        if trace_steps and not already_auditing and _should_audit(success, turns, trace_steps, host_level):
             audit_async(task, task_type, trace_steps, success, turns, project_name, host_level)
             result += "; 轨迹审计已启动"
 
@@ -502,6 +570,7 @@ def _distill_experience(
             max_tokens=300,
             temperature=0.3,
             timeout=DEFAULT_TIMEOUT,
+            purpose="distill",
         )
         record_call()
 

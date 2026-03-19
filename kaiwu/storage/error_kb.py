@@ -213,6 +213,11 @@ class ErrorKB:
         fp = _fingerprint(error_text)
         entry = self._data["entries"].get(fp)
         if entry and entry.get("solution"):
+            try:
+                from kaiwu.llm_client import record_local_hit
+                record_local_hit()
+            except Exception:
+                pass
             return {
                 "source": "local_exact",
                 "key": entry["key"],
@@ -223,6 +228,11 @@ class ErrorKB:
         # 第二层：模糊关键词匹配
         fuzzy = _fuzzy_match(error_text, self._data["entries"])
         if fuzzy:
+            try:
+                from kaiwu.llm_client import record_local_hit
+                record_local_hit()
+            except Exception:
+                pass
             return {
                 "source": "local_fuzzy",
                 "key": fuzzy["key"],

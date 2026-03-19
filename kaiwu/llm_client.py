@@ -11,12 +11,13 @@
 无需新增依赖：openai 和 httpx 均在现有依赖链中。
 """
 
+import json
 import time
 from typing import Optional
 
 from loguru import logger
 
-from kaiwu.config import get_config, DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT
+from kaiwu.config import get_config, DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT, USAGE_PATH
 
 # 重试配置
 MAX_RETRIES = 2        # 最多重试 2 次（共 3 次尝试）
@@ -34,6 +35,63 @@ _circuit_breaker = {
 }
 _CB_THRESHOLD = 5              # 连续失败 N 次触发熔断
 _CB_COOLDOWN = 60.0            # 熔断冷却时间（秒）
+
+
+def record_usage(prompt_tokens: int, completion_tokens: int, purpose: str = "") -> None:
+    """记录 token 消耗到 ~/.kaiwu/usage.json（fire-and-forget，失败静默）"""
+    try:
+        today = time.strftime("%Y-%m-%d")
+        data: dict = {}
+        if USAGE_PATH.exists():
+            try:
+                data = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                data = {}
+
+        data["total_prompt_tokens"] = data.get("total_prompt_tokens", 0) + prompt_tokens
+        data["total_completion_tokens"] = data.get("total_completion_tokens", 0) + completion_tokens
+        data["total_calls"] = data.get("total_calls", 0) + 1
+        data.setdefault("local_hits", 0)
+
+        daily = data.setdefault("daily", {})
+        day = daily.setdefault(today, {"prompt_tokens": 0, "completion_tokens": 0, "calls": 0, "local_hits": 0})
+        day["prompt_tokens"] += prompt_tokens
+        day["completion_tokens"] += completion_tokens
+        day["calls"] += 1
+
+        if purpose:
+            by_purpose = data.setdefault("by_purpose", {})
+            p = by_purpose.setdefault(purpose, {"calls": 0, "tokens": 0})
+            p["calls"] += 1
+            p["tokens"] += prompt_tokens + completion_tokens
+
+        USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        USAGE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        logger.debug(f"record_usage 失败（静默）: {e}")
+
+
+def record_local_hit() -> None:
+    """记录一次本地命中（0 token 消耗）"""
+    try:
+        today = time.strftime("%Y-%m-%d")
+        data: dict = {}
+        if USAGE_PATH.exists():
+            try:
+                data = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                data = {}
+
+        data["local_hits"] = data.get("local_hits", 0) + 1
+
+        daily = data.setdefault("daily", {})
+        day = daily.setdefault(today, {"prompt_tokens": 0, "completion_tokens": 0, "calls": 0, "local_hits": 0})
+        day["local_hits"] = day.get("local_hits", 0) + 1
+
+        USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        USAGE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        logger.debug(f"record_local_hit 失败（静默）: {e}")
 
 
 def _is_retryable(error: Exception) -> bool:
@@ -81,6 +139,7 @@ def call_llm(
     max_tokens: int = DEFAULT_MAX_TOKENS,
     temperature: float = 0.3,
     timeout: int = DEFAULT_TIMEOUT,
+    purpose: str = "",
 ) -> str:
     """统一调用 LLM，返回文本内容
 
@@ -111,10 +170,12 @@ def call_llm(
     for attempt in range(MAX_RETRIES + 1):
         try:
             if api_format == "anthropic":
-                result = _call_anthropic(messages, max_tokens, temperature, timeout)
+                result, prompt_tok, completion_tok = _call_anthropic(messages, max_tokens, temperature, timeout)
             else:
-                result = _call_openai(messages, max_tokens, temperature, timeout)
+                result, prompt_tok, completion_tok = _call_openai(messages, max_tokens, temperature, timeout)
             _record_success()
+            if prompt_tok > 0 or completion_tok > 0:
+                record_usage(prompt_tok, completion_tok, purpose)
             return result
         except Exception as e:
             last_error = e
@@ -138,8 +199,12 @@ def _call_openai(
     max_tokens: int,
     temperature: float,
     timeout: int,
-) -> str:
-    """通过 OpenAI SDK 调用（兼容 DeepSeek / OpenAI / 任何 OpenAI 兼容 API）"""
+) -> tuple[str, int, int]:
+    """通过 OpenAI SDK 调用（兼容 DeepSeek / OpenAI / 任何 OpenAI 兼容 API）
+
+    Returns:
+        (text, prompt_tokens, completion_tokens)
+    """
     from openai import OpenAI
 
     config = get_config()
@@ -156,7 +221,13 @@ def _call_openai(
         timeout=timeout,
     )
 
-    return response.choices[0].message.content or ""
+    text = response.choices[0].message.content or ""
+    prompt_tok = 0
+    completion_tok = 0
+    if response.usage:
+        prompt_tok = response.usage.prompt_tokens or 0
+        completion_tok = response.usage.completion_tokens or 0
+    return text, prompt_tok, completion_tok
 
 
 def _call_anthropic(
@@ -164,8 +235,12 @@ def _call_anthropic(
     max_tokens: int,
     temperature: float,
     timeout: int,
-) -> str:
-    """通过 httpx 调用 Anthropic 原生 /v1/messages 接口"""
+) -> tuple[str, int, int]:
+    """通过 httpx 调用 Anthropic 原生 /v1/messages 接口
+
+    Returns:
+        (text, prompt_tokens, completion_tokens)
+    """
     import httpx
 
     config = get_config()
@@ -206,6 +281,11 @@ def _call_anthropic(
     data = resp.json()
     # Anthropic 响应格式: {"content": [{"type": "text", "text": "..."}]}
     content_blocks = data.get("content", [])
-    if content_blocks:
-        return content_blocks[0].get("text", "")
-    return ""
+    text = content_blocks[0].get("text", "") if content_blocks else ""
+
+    # Anthropic usage: {"input_tokens": N, "output_tokens": N}
+    usage = data.get("usage", {})
+    prompt_tok = usage.get("input_tokens", 0)
+    completion_tok = usage.get("output_tokens", 0)
+
+    return text, prompt_tok, completion_tok

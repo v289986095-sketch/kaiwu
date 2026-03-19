@@ -231,6 +231,10 @@ class Experience:
     deprecated: bool = False
     deprecated_at: float = 0.0
 
+    # v0.3 新增：助攻率度量
+    inject_count: int = 0   # 被注入次数
+    assist_count: int = 0   # 注入后任务成功的次数
+
     def to_dict(self) -> dict:
         d = {
             "exp_id": self.exp_id,
@@ -255,6 +259,10 @@ class Experience:
         if self.deprecated:
             d["deprecated"] = True
             d["deprecated_at"] = self.deprecated_at
+        if self.inject_count:
+            d["inject_count"] = self.inject_count
+        if self.assist_count:
+            d["assist_count"] = self.assist_count
         return d
 
     @classmethod
@@ -281,6 +289,8 @@ class Experience:
             project_name=d.get("project_name", ""),
             deprecated=d.get("deprecated", False),
             deprecated_at=d.get("deprecated_at", 0.0),
+            inject_count=d.get("inject_count", 0),
+            assist_count=d.get("assist_count", 0),
         )
 
     def to_few_shot(self) -> str:
@@ -527,6 +537,7 @@ class ExperienceStore:
                 max_tokens=300,
                 temperature=0.1,
                 timeout=DEFAULT_TIMEOUT,
+                purpose="memory_decision",
             )
             record_call()
 
@@ -763,8 +774,24 @@ class ExperienceStore:
 
         if results:
             self._save()
+            try:
+                from kaiwu.llm_client import record_local_hit
+                for _ in results:
+                    record_local_hit()
+            except Exception:
+                pass
 
         return results
+
+    def record_assist(self, exp_ids: list[str]) -> None:
+        """记录这些经验参与了一次成功任务（助攻率度量）"""
+        changed = False
+        for eid in exp_ids:
+            if eid in self._data:
+                self._data[eid].assist_count += 1
+                changed = True
+        if changed:
+            self._save()
 
     def inject_into_context(self, task: str, task_type: str = "",
                             limit: int = 3, project_name: str = "") -> str:
@@ -778,7 +805,14 @@ class ExperienceStore:
         experiences = self.retrieve(task, task_type, top_k=limit,
                                     project_name=project_name)
         if not experiences:
+            self._last_injected_ids: list[str] = []
             return ""
+
+        # 记录注入的经验 ID，并增加 inject_count
+        self._last_injected_ids = [e.exp_id for e in experiences]
+        for e in experiences:
+            e.inject_count += 1
+        self._save()
 
         # 分离成功经验和失败经验
         success_exps = [e for e in experiences if e.success]

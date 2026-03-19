@@ -38,7 +38,13 @@ from rich.table import Table
 
 from kaiwu.config import get_config, KAIWU_HOME, CONFIG_PATH
 
-console = Console()
+# Windows GBK 终端强制 VT100 路径，避免 Unicode 块字符乱码
+_is_legacy_windows = (
+    sys.platform == "win32"
+    and sys.stdout.encoding
+    and sys.stdout.encoding.lower() in ("gbk", "gb2312", "gb18030", "cp936")
+)
+console = Console(legacy_windows=False) if _is_legacy_windows else Console()
 
 # ── 版本常量 ──
 CURRENT_VERSION = "0.2.0"
@@ -96,11 +102,41 @@ def _check_update_quiet() -> str | None:
     return None
 
 
-@click.group()
+_LOGO = r"""
+  ██╗  ██╗ █████╗ ██╗██╗    ██╗██╗   ██╗
+  ██║ ██╔╝██╔══██╗██║██║    ██║██║   ██║
+  █████╔╝ ███████║██║██║ █╗ ██║██║   ██║
+  ██╔═██╗ ██╔══██║██║██║███╗██║██║   ██║
+  ██║  ██╗██║  ██║██║╚███╔███╔╝╚██████╔╝
+  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝ ╚══╝╚══╝  ╚═════╝"""
+
+_LOGO_SIMPLE = """
+  K   K  AAA  III W   W U   U
+  K  K  A   A  I  W   W U   U
+  KK    AAAAA  I  W W W U   U
+  K  K  A   A  I  WW WW U   U
+  K   K A   A III  W   W  UUU"""
+
+
+def _print_banner():
+    """打印启动 banner"""
+    try:
+        console.print(f"[bold cyan]{_LOGO}[/bold cyan]")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # 极端 legacy 终端无法输出 Unicode 块字符
+        console.print(f"[bold cyan]{_LOGO_SIMPLE}[/bold cyan]")
+    console.print(f"  [dim]AI Coding 增强引擎  v{CURRENT_VERSION}[/dim]\n")
+
+
+@click.group(invoke_without_command=True)
 @click.version_option(version=CURRENT_VERSION, prog_name="cl-kaiwu")
-def main():
+@click.pass_context
+def main(ctx):
     """开物 — AI Coding 增强引擎"""
-    pass
+    if ctx.invoked_subcommand is None:
+        _print_banner()
+        # 无子命令时显示帮助
+        click.echo(ctx.get_help())
 
 
 @main.command()
@@ -157,6 +193,57 @@ def stats():
         )[:5]
         table3.add_row("热门类型", ", ".join(f"{t}({c})" for t, c in top_types))
     console.print(table3)
+
+    # Token 消耗统计
+    try:
+        from kaiwu.config import USAGE_PATH
+        if USAGE_PATH.exists():
+            udata = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+            total_prompt = udata.get("total_prompt_tokens", 0)
+            total_completion = udata.get("total_completion_tokens", 0)
+            total_tokens = total_prompt + total_completion
+            total_calls = udata.get("total_calls", 0)
+            local_hits = udata.get("local_hits", 0)
+
+            # 估算费用（DeepSeek-chat: 输入 ¥1/M tokens，输出 ¥2/M tokens）
+            cost_cny = (total_prompt / 1_000_000) * 1.0 + (total_completion / 1_000_000) * 2.0
+
+            table4 = Table(title="Token 消耗统计")
+            table4.add_column("项目", style="bold")
+            table4.add_column("值")
+            table4.add_row("累计 LLM 调用", f"{total_calls} 次")
+            table4.add_row("累计 Token 消耗", f"{total_tokens:,} ({total_prompt:,} 输入 + {total_completion:,} 输出)")
+            table4.add_row("本地命中（0 token）", f"{local_hits} 次")
+            table4.add_row("估算费用", f"≈ ¥{cost_cny:.4f}")
+
+            by_purpose = udata.get("by_purpose", {})
+            _purpose_names = {
+                "plan": "规划",
+                "lessons": "诊断",
+                "distill": "蒸馏",
+                "audit": "审计",
+                "condense": "压缩",
+                "memory_decision": "记忆决策",
+            }
+            if by_purpose:
+                purpose_lines = []
+                for key, pdata in sorted(by_purpose.items(), key=lambda x: x[1]["tokens"], reverse=True):
+                    name = _purpose_names.get(key, key)
+                    purpose_lines.append(f"{name}: {pdata['calls']}次 / {pdata['tokens']:,} tokens")
+                table4.add_row("按用途", "\n".join(purpose_lines))
+
+            # 今日数据
+            today = time.strftime("%Y-%m-%d")
+            daily = udata.get("daily", {})
+            if today in daily:
+                d = daily[today]
+                day_tokens = d.get("prompt_tokens", 0) + d.get("completion_tokens", 0)
+                table4.add_row("今日调用", f"{d.get('calls', 0)} 次 / {day_tokens:,} tokens")
+                table4.add_row("今日本地命中", f"{d.get('local_hits', 0)} 次")
+
+            console.print(table4)
+    except Exception as e:
+        console.print(f"[dim]Token 统计读取失败: {e}[/dim]")
 
 
 @main.group(invoke_without_command=True)

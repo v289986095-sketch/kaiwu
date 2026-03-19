@@ -159,6 +159,7 @@ def condense_history(history: list[dict], task_goal: str) -> dict[str, Any]:
             max_tokens=500,
             temperature=0.2,
             timeout=DEFAULT_TIMEOUT,
+            purpose="condense",
         )
         record_call()
 
