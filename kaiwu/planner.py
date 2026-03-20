@@ -193,15 +193,9 @@ def get_plan(task: str, context: str = "", session_id: str = "",
         )
         record_call()
 
-        # 解析 JSON —— 容忍 markdown 代码块包裹
+        # 解析 JSON —— 容忍 markdown 代码块包裹、前后文字、多种格式
         text = raw.strip()
-        if text.startswith("```"):
-            # 去掉 ```json ... ``` 包裹
-            lines = text.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            text = "\n".join(lines)
-
-        plan = json.loads(text)
+        plan = _parse_plan_json(text)
 
         # 校验必要字段，补齐缺失
         plan.setdefault("steps", [])
@@ -257,6 +251,62 @@ def get_plan(task: str, context: str = "", session_id: str = "",
     except Exception as e:
         logger.warning(f"规划调用失败: {e}")
         return {**_EMPTY_PLAN, "source": "error"}
+
+
+def _parse_plan_json(text: str) -> dict:
+    """从 LLM 返回文本中提取 JSON，容忍多种格式
+
+    支持：
+    - 纯 JSON
+    - ```json ... ``` 包裹
+    - 前后有解释文字，中间有 JSON 块
+    - 截断的 JSON（尽力修复）
+    """
+    import re
+
+    # 1. 尝试直接解析
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 2. 提取 ```json ... ``` 代码块
+    m = re.search(r'```(?:json)?\s*\n(.*?)```', text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+
+    # 3. 找第一个 { 到最后一个 } 之间的内容
+    first_brace = text.find('{')
+    last_brace = text.rfind('}')
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = text[first_brace:last_brace + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    # 4. 截断修复：JSON 被 max_tokens 截断，尝试补全
+    if first_brace != -1 and last_brace <= first_brace:
+        candidate = text[first_brace:]
+        # 补全缺失的括号
+        open_braces = candidate.count('{') - candidate.count('}')
+        open_brackets = candidate.count('[') - candidate.count(']')
+        # 截断到最后一个完整的值
+        for trim_char in (',', '"', ']', '}'):
+            idx = candidate.rfind(trim_char)
+            if idx > 0:
+                candidate = candidate[:idx + 1]
+                break
+        candidate += ']' * max(0, open_brackets) + '}' * max(0, open_braces)
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    raise json.JSONDecodeError("无法从 LLM 响应中提取有效 JSON", text, 0)
 
 
 def _filter_knowledge_for_task(task_lower: str) -> str:
