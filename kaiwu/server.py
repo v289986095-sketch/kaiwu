@@ -693,10 +693,11 @@ def kaiwu_ping() -> str:
     """
     try:
         config = get_config()
+        from kaiwu import __version__
         result = {
             "status": "ok",
             "message": "kaiwu is active and ready",
-            "version": "0.2.0",
+            "version": __version__,
             "llm_configured": bool(config.llm_api_key),
             "llm_provider": config.active_provider_name if config.llm_api_key else "none",
             "kaiwu_home": str(KAIWU_HOME),

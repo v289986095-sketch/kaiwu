@@ -1,8 +1,5 @@
 """经验库核心逻辑单元测试"""
 
-import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-
 import json
 import tempfile
 import shutil

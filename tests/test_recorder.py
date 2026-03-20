@@ -1,8 +1,5 @@
 """记录器 + 审计逻辑单元测试"""
 
-import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-
 import pytest
 from unittest.mock import patch, MagicMock
 

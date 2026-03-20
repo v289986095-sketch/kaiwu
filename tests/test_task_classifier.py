@@ -1,8 +1,5 @@
 """任务分类器单元测试"""
 
-import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-
 import pytest
 
 from kaiwu.task_classifier import (

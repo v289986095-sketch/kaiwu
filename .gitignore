@@ -39,6 +39,3 @@ kaiwu-official-site.html
 
 # Claude Code local config
 .claude/
-
-# User data (local)
-~/.kaiwu/
